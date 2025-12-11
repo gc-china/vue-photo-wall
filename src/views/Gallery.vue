@@ -15,26 +15,38 @@ const activeCategory = ref(route.params.name || '全部');
 // --- 核心优化：CDN 图片处理 ---
 const getOptimizedUrl = (url) => {
   if (!url) return '';
-  // 1. 避免重复处理
-  if (url.includes('images.weserv.nl')) return url;
 
-  // 2. 如果是本地部署到 GitHub Pages，这里可能需要填你的完整域名
-  // 例如: const baseUrl = 'https://你的用户名.github.io/你的仓库名';
-  const baseUrl = '';
+  // 1. 如果是网络图片(http开头)，直接返回
+  if (url.startsWith('http')) return url;
 
-  let fullUrl = url;
-  if (!url.startsWith('http')) {
-    if (!baseUrl) return url; // 本地开发环境或未配置 baseUrl 时回退到原图
-    fullUrl = baseUrl + url;
+  // 2. 配置你的 GitHub 信息
+  const user = 'gc-china';       // 用户名
+  const repo = 'vue-photo-wall'; // 仓库名
+  const branch = 'main';         // 分支名 (注意是 main 还是 master)
+
+  // 3. 处理路径
+  let path = url;
+
+  // 💡 关键修正：如果路径以 / 开头，去掉它
+  if (path.startsWith('/')) {
+    path = path.slice(1);
   }
 
-  const cleanUrl = fullUrl.replace(/^https?:\/\//, '');
+  // 💡 关键修正：Vite 项目的静态资源通常在 public 文件夹里
+  // 如果 GitHub 根目录下没有 thumbs 文件夹，而是在 public/thumbs，这里就要补上
+  // 我们判断：如果不是以 public 开头，就给它拼上
+  if (!path.startsWith('public/')) {
+    path = 'public/' + path;
+  }
 
-  // 🚀 Gallery 优化参数：
-  // w=500: 首页卡片较宽，设置为 500px 保证清晰度 (原图可能 4000px+)
-  // q=80: 质量 80%
-  // output=webp: 现代浏览器极速加载格式
-  return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&w=500&q=80&output=webp`;
+  // 4. 生成 jsDelivr 链接 (中文自动编码)
+  // encodeURI 处理整个路径，确保中文被转换
+  // 使用 encodeURIComponent 需要单独处理每一段，简单起见用 encodeURI 即可，
+  // 或者让 jsDelivr 自己处理（通常浏览器访问时会自动 encode）
+  // 为了代码稳健，我们手动 encode 路径部分
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+
+  return `https://cdn.jsdelivr.net/gh/${user}/${repo}@${branch}/${encodedPath}`;
 };
 
 // --- 无限滚动逻辑 ---

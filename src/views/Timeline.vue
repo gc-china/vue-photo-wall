@@ -22,31 +22,37 @@ onMounted(() => {
 const getOptimizedUrl = (url) => {
   if (!url) return '';
 
-  // 1. 如果已经是 weserv 处理过的，直接返回
-  if (url.includes('images.weserv.nl')) return url;
+  // 1. 如果是网络图片(http开头)，直接返回
+  if (url.startsWith('http')) return url;
 
-  // 2. 这里的 base URL 需要换成你 GitHub Pages 的实际访问地址
-  //    如果你使用的是本地 public 文件夹里的图片 (例如 "/photos/abc.jpg")
-  //    CDN 必须通过公网才能抓取到图片，所以需要拼接完整域名。
-  //    示例：const baseUrl = 'https://你的用户名.github.io/项目名';
-  //    如果你的 photos.json 里已经是 http 开头的完整网络链接，则不需要这个 baseUrl。
-  const baseUrl = '';
+  // 2. 配置你的 GitHub 信息
+  const user = 'gc-china';       // 用户名
+  const repo = 'vue-photo-wall'; // 仓库名
+  const branch = 'main';         // 分支名 (注意是 main 还是 master)
 
-  let fullUrl = url;
-  if (!url.startsWith('http')) {
-    // 处理本地路径 (如果 baseUrl 为空，本地开发环境无法使用 CDN 加速，直接返回原图)
-    if (!baseUrl) return url;
-    fullUrl = baseUrl + url;
+  // 3. 处理路径
+  let path = url;
+
+  // 💡 关键修正：如果路径以 / 开头，去掉它
+  if (path.startsWith('/')) {
+    path = path.slice(1);
   }
 
-  // 去掉协议头 (https://) 因为 weserv 参数格式要求
-  const cleanUrl = fullUrl.replace(/^https?:\/\//, '');
+  // 💡 关键修正：Vite 项目的静态资源通常在 public 文件夹里
+  // 如果 GitHub 根目录下没有 thumbs 文件夹，而是在 public/thumbs，这里就要补上
+  // 我们判断：如果不是以 public 开头，就给它拼上
+  if (!path.startsWith('public/')) {
+    path = 'public/' + path;
+  }
 
-  // 参数说明：
-  // w=300: 宽度限制为 300px (缩略图足够了)
-  // q=80:  压缩质量 80%
-  // output=webp: 转换为 webp 格式 (体积更小)
-  return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&w=300&q=80&output=webp`;
+  // 4. 生成 jsDelivr 链接 (中文自动编码)
+  // encodeURI 处理整个路径，确保中文被转换
+  // 使用 encodeURIComponent 需要单独处理每一段，简单起见用 encodeURI 即可，
+  // 或者让 jsDelivr 自己处理（通常浏览器访问时会自动 encode）
+  // 为了代码稳健，我们手动 encode 路径部分
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+
+  return `https://cdn.jsdelivr.net/gh/${user}/${repo}@${branch}/${encodedPath}`;
 };
 
 // --- 数据处理：按 年-月-日 分组 ---
