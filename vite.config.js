@@ -1,18 +1,47 @@
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import viteCompression from 'vite-plugin-compression'
 
-// https://vitejs.dev/config/
-export default defineConfig({
-    // 重要：设置为 './' 表示使用相对路径，这样你的网站放在任何子文件夹下都能运行
-    base: '/vue-photo-wall/',
+export default defineConfig(({ mode }) => {
+    // 获取当前的环境变量
+    const env = loadEnv(mode, process.cwd(), '')
 
-    plugins: [
-        vue(),
-    ],
-    resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+    return {
+        // 🚀 核心逻辑：自动判断环境
+        // 如果检测到 VERCEL 环境变量，使用根路径 '/'
+        // 否则（GitHub Pages），使用 '/你的仓库名/' (请把 chrono-frame 换成你真实的仓库名)
+        base: env.VERCEL ? '/' : '/vue-photo-wall/',
+
+        plugins: [
+            vue(),
+            viteCompression({
+                verbose: true,
+                disable: false,
+                threshold: 10240,
+                algorithm: 'gzip',
+                ext: '.gz',
+            })
+        ],
+        resolve: {
+            alias: {
+                '@': fileURLToPath(new URL('./src', import.meta.url))
+            }
+        },
+        build: {
+            cssCodeSplit: true,
+            chunkSizeWarningLimit: 500,
+            rollupOptions: {
+                output: {
+                    manualChunks(id) {
+                        if (id.includes('node_modules')) {
+                            if (id.includes('vue')) return 'vendor-vue';
+                            if (id.includes('dayjs')) return 'vendor-dayjs';
+                            return 'vendor-libs';
+                        }
+                    }
+                }
+            }
         }
     }
 })

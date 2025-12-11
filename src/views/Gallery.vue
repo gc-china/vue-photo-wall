@@ -2,28 +2,52 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { store } from '../store';
-import photosData from '@/assets/photos.json';
+// import photosData from '@/assets/photos.json';
 import dayjs from 'dayjs';
 
 const route = useRoute();
-const router = useRouter(); // 引入 router 用于跳转
+const router = useRouter();
 
-const allPhotos = ref(photosData);
+// const allPhotos = ref(photosData);
+const allPhotos = computed(() => store.photos);
 const activeCategory = ref(route.params.name || '全部');
 
-// --- 无限滚动逻辑 ---
-const PAGE_SIZE = 20; // 每次加载多少张
-const displayLimit = ref(PAGE_SIZE); // 当前显示的数量
-const bottomObserver = ref(null); // 底部观察者元素
+// --- 核心优化：CDN 图片处理 ---
+const getOptimizedUrl = (url) => {
+  if (!url) return '';
+  // 1. 避免重复处理
+  if (url.includes('images.weserv.nl')) return url;
 
-// 监听路由变化
+  // 2. 如果是本地部署到 GitHub Pages，这里可能需要填你的完整域名
+  // 例如: const baseUrl = 'https://你的用户名.github.io/你的仓库名';
+  const baseUrl = '';
+
+  let fullUrl = url;
+  if (!url.startsWith('http')) {
+    if (!baseUrl) return url; // 本地开发环境或未配置 baseUrl 时回退到原图
+    fullUrl = baseUrl + url;
+  }
+
+  const cleanUrl = fullUrl.replace(/^https?:\/\//, '');
+
+  // 🚀 Gallery 优化参数：
+  // w=500: 首页卡片较宽，设置为 500px 保证清晰度 (原图可能 4000px+)
+  // q=80: 质量 80%
+  // output=webp: 现代浏览器极速加载格式
+  return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&w=500&q=80&output=webp`;
+};
+
+// --- 无限滚动逻辑 ---
+const PAGE_SIZE = 20;
+const displayLimit = ref(PAGE_SIZE);
+const bottomObserver = ref(null);
+
 watch(() => route.params.name, (newName) => {
   activeCategory.value = newName || '全部';
-  displayLimit.value = PAGE_SIZE; // 切换分类时重置数量
-  window.scrollTo(0, 0); // 回到顶部
+  displayLimit.value = PAGE_SIZE;
+  window.scrollTo(0, 0);
 });
 
-// 计算所有符合条件的照片 (不限制数量)
 const allFilteredPhotos = computed(() => {
   let result = allPhotos.value.filter(p => {
     const matchCategory = activeCategory.value === '全部' ? true : p.category === activeCategory.value;
@@ -38,42 +62,40 @@ const allFilteredPhotos = computed(() => {
   return result.sort((a, b) => new Date(b.date) - new Date(a.date));
 });
 
-// 计算当前应该渲染的照片 (限制数量，解决 DOM 卡顿)
 const visiblePhotos = computed(() => {
   return allFilteredPhotos.value.slice(0, displayLimit.value);
 });
 
-// 加载更多函数
 const loadMore = () => {
   if (displayLimit.value < allFilteredPhotos.value.length) {
     displayLimit.value += PAGE_SIZE;
   }
 };
 
-// IntersectionObserver 监听底部
 onMounted(() => {
+  store.initData();
   const observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting) {
       loadMore();
     }
-  }, { rootMargin: '200px' }); // 提前 200px 预加载
+  }, { rootMargin: '200px' });
 
   if (bottomObserver.value) observer.observe(bottomObserver.value);
 });
 
-// --- 其他逻辑 ---
 const loadedImages = ref(new Set());
 const onImageLoad = (id) => loadedImages.value.add(id);
 const formatDate = (date) => dayjs(date).format('YYYY.MM.DD');
 
-// 悬浮时间标
+// 悬浮时间标逻辑
 const currentDateLabel = ref('');
 const showDateLabel = ref(false);
 let scrollTimer = null;
 
 const handleScroll = () => {
-  const container = document.querySelector('.main-content');
-  if (!container) return;
+  // 注意：如果你是在 App.vue 里把 main-content 设为了滚动容器，这里要对应监听
+  // 如果是 window 滚动，用 window.addEventListener
+  const container = document.querySelector('.main-content') || window;
 
   showDateLabel.value = true;
   const cards = document.querySelectorAll('.photo-card');
@@ -89,10 +111,15 @@ const handleScroll = () => {
   scrollTimer = setTimeout(() => showDateLabel.value = false, 1500);
 };
 
-onMounted(() => document.querySelector('.main-content')?.addEventListener('scroll', handleScroll, { passive: true }));
-onUnmounted(() => document.querySelector('.main-content')?.removeEventListener('scroll', handleScroll));
+onMounted(() => {
+  const container = document.querySelector('.main-content') || window;
+  container.addEventListener('scroll', handleScroll, { passive: true });
+});
+onUnmounted(() => {
+  const container = document.querySelector('.main-content') || window;
+  container.removeEventListener('scroll', handleScroll);
+});
 
-// 跳转详情
 const goToDetail = (id) => {
   router.push(`/photo/${id}`);
 };
@@ -136,7 +163,7 @@ const goToDetail = (id) => {
           <div class="img-container" :class="{ 'loaded': loadedImages.has(photo.id), 'skeleton-pulse': !loadedImages.has(photo.id) }">
 
             <img
-                :src="photo.thumb || photo.url"
+                :src="getOptimizedUrl(photo.thumb || photo.url)"
                 loading="lazy"
                 :alt="photo.name"
                 @load="onImageLoad(photo.id)"
@@ -177,7 +204,7 @@ const goToDetail = (id) => {
   padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;
   backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); pointer-events: none;
 }
-@media (max-width: 768px) { .floating-date-badge { left: 20px; top: 20px; } }
+@media (max-width: 768px) { .floating-date-badge { left: 20px; top: 80px; } } /* 手机端避开顶部栏 */
 
 /* Header */
 .gallery-header { margin-bottom: 40px; border-bottom: 1px solid #f0f0f0; padding-bottom: 20px; }
@@ -187,12 +214,12 @@ const goToDetail = (id) => {
 .search-feedback span { color: #000; font-weight: 600; border-bottom: 2px solid #ddd; }
 
 /* 瀑布流 */
-.masonry-grid { column-count: 4; column-gap: 20px; } /* 改为4列更紧凑 */
+.masonry-grid { column-count: 4; column-gap: 20px; }
 @media (max-width: 1600px) { .masonry-grid { column-count: 3; } }
 @media (max-width: 1100px) { .masonry-grid { column-count: 2; } }
 @media (max-width: 600px)  { .gallery-container { padding: 20px; } .masonry-grid { column-count: 1; } }
 
-.photo-card { break-inside: avoid; margin-bottom: 20px; position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; }
+.photo-card { break-inside: avoid; margin-bottom: 20px; position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; transform: translateZ(0); } /* fix chrome flicker */
 
 /* --- 骨架屏动画 --- */
 @keyframes pulse {
@@ -205,8 +232,8 @@ const goToDetail = (id) => {
 }
 
 .img-container {
-  background: #f0f0f0; /* 默认灰色背景 */
-  min-height: 250px; /* 默认高度，防止排版错乱 */
+  background: #f0f0f0;
+  min-height: 250px;
   position: relative;
 }
 
@@ -224,7 +251,12 @@ const goToDetail = (id) => {
   opacity: 0; transition: all 0.3s ease;
   display: flex; align-items: flex-end; padding: 20px;
 }
-.photo-card:hover .overlay { opacity: 1; }
+.photo-card:hover .overlay { opacity: 1; } /* 电脑端悬停显示 */
+@media (max-width: 768px) {
+  .overlay { opacity: 1; background: linear-gradient(to top, rgba(0,0,0,0.4), transparent 30%); } /* 手机端常显，但淡一点 */
+  .overlay-content { transform: translateY(0); }
+}
+
 .overlay-content { color: #fff; width: 100%; transform: translateY(10px); transition: transform 0.3s; }
 .photo-card:hover .overlay-content { transform: translateY(0); }
 .photo-title { margin: 0 0 4px 0; font-size: 15px; font-weight: 600; }

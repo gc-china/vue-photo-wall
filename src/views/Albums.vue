@@ -2,6 +2,7 @@
 import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import photosData from '@/assets/photos.json';
+import {store} from "@/store.js";
 
 const router = useRouter();
 
@@ -23,6 +24,7 @@ const albums = computed(() => {
 
 const randomBg = ref('');
 onMounted(() => {
+  store.initData();
   if (photosData.length > 0) {
     const randomIndex = Math.floor(Math.random() * photosData.length);
     randomBg.value = photosData[randomIndex].url;
