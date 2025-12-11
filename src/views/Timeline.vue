@@ -1,35 +1,44 @@
 <script setup>
-import { computed } from 'vue';
-import { useRouter } from 'vue-router'; // 1. 引入路由
-import photosData from '@/assets/photos.json';
+import {computed} from 'vue';
+import {useRouter} from 'vue-router';
+import photosData from '@/assets/photos.json'; // 保持你原有的引用方式
 import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn'; // 引入中文包，以便显示 "星期几"
 
-const router = useRouter(); // 2. 获取路由实例
+dayjs.locale('zh-cn'); // 设置全局语言为中文
 
-// --- 数据处理：按年份-月份分组 ---
+const router = useRouter();
+
+// --- 数据处理：按 年-月-日 分组 ---
 const timelineGroups = computed(() => {
   const groups = {};
 
-  photosData.forEach(photo => {
-    // 获取 "2023年12月" 这样的 Key
-    const dateKey = dayjs(photo.date).format('YYYY年MM月');
+  // 1. 先按时间倒序排序源数据（防止JSON里是乱序的）
+  const sortedPhotos = [...photosData].sort((a, b) => {
+    return dayjs(b.date).valueOf() - dayjs(a.date).valueOf();
+  });
+
+  sortedPhotos.forEach(photo => {
+    // 核心修改：格式化改为 "2023年12月12日 星期二"
+    // 你也可以只用 'YYYY年MM月DD日'
+    const dateKey = dayjs(photo.date).format('YYYY年MM月DD日 dddd');
 
     if (!groups[dateKey]) {
       groups[dateKey] = {
-        title: dateKey,
+        title: dateKey,    // 显示标题：2023年12月12日 星期二
+        timestamp: dayjs(photo.date).valueOf(), // 用于后续排序
         photos: []
       };
     }
     groups[dateKey].photos.push(photo);
   });
 
-  // 把对象转为数组，并按时间倒序
-  return Object.values(groups).sort((a, b) => {
-    return b.title.localeCompare(a.title);
-  });
+  // 2. 将分组对象转为数组
+  // 虽然源数据排过序，但对象键遍历顺序不稳定，建议再次按组的时间戳排序
+  return Object.values(groups).sort((a, b) => b.timestamp - a.timestamp);
 });
 
-// --- 3. 核心修复：跳转函数 ---
+// 跳转详情
 const goToDetail = (id) => {
   router.push(`/photo/${id}`);
 };
@@ -40,13 +49,13 @@ const goToDetail = (id) => {
     <h2>⏳ 时间归档</h2>
 
     <div v-for="group in timelineGroups" :key="group.title" class="time-section">
-      <h3 class="month-title">
+      <div class="date-header">
         <span class="icon-dot"></span>
-        {{ group.title }}
-        <span class="count">({{ group.photos.length }}张)</span>
-      </h3>
+        <span class="date-text">{{ group.title }}</span>
+        <span class="count">{{ group.photos.length }}张</span>
+      </div>
 
-      <div class="month-grid">
+      <div class="day-grid">
         <div
             v-for="photo in group.photos"
             :key="photo.id"
@@ -54,10 +63,14 @@ const goToDetail = (id) => {
             @click="goToDetail(photo.id)"
         >
           <div class="img-box">
-            <img :src="photo.thumb || photo.url" loading="lazy" />
+            <img :src="photo.thumb || photo.url" loading="lazy"/>
           </div>
         </div>
       </div>
+    </div>
+
+    <div v-if="timelineGroups.length === 0" style="text-align:center; color:#999; padding:50px;">
+      暂无照片数据
     </div>
   </div>
 </template>
@@ -65,71 +78,93 @@ const goToDetail = (id) => {
 <style scoped>
 .timeline-container {
   padding: 20px;
-  max-width: 800px;
+  max-width: 900px; /*稍微宽一点适应照片墙*/
   margin: 0 auto;
 }
 
-/* 左侧的时间线效果 */
+/* 左侧的时间线竖线 */
 .time-section {
   position: relative;
-  padding-left: 20px;
-  margin-bottom: 40px;
-  border-left: 2px solid #eee; /* 竖线 */
+  padding-left: 24px;
+  padding-bottom: 30px; /* 每组之间的间距 */
+  border-left: 2px solid #e0e0e0;
 }
 
-.month-title {
-  font-size: 1.2rem;
-  margin: 0 0 15px -26px; /* 向左偏移，对齐竖线 */
+/* 最后一组去掉竖线（可选，看个人喜好） */
+.time-section:last-child {
+  border-left: 2px solid transparent;
+}
+
+/* 日期标题区域 */
+.date-header {
+  position: relative;
+  margin-left: -31px; /* 向左偏移以对齐圆点 */
+  margin-bottom: 15px;
   display: flex;
   align-items: center;
-  background: #f4f4f4; /* 背景色盖住线条 */
-  display: inline-block;
-  padding: 5px 10px;
-  border-radius: 4px;
 }
 
+/* 时间轴上的圆点 */
 .icon-dot {
-  display: inline-block;
-  width: 12px; height: 12px;
-  background: #333;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 3px solid #333; /* 实心圈风格 */
   border-radius: 50%;
+  margin-right: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px #f8f9fa; /* 利用阴影做遮挡线的间隔 */
+}
+
+/* 日期文字 */
+.date-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
   margin-right: 8px;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 2px #eee;
 }
 
 .count {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #999;
-  font-weight: normal;
-  margin-left: 5px;
+  background: #eee;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
-.month-grid {
+/* 网格布局 */
+.day-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 小方格布局 */
-  gap: 10px;
+  /* 响应式：最小宽度120px，自动填满 */
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
 }
 
 .mini-card {
-  aspect-ratio: 1; /* 正方形 */
+  aspect-ratio: 1;
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s;
+  position: relative;
+  background: #eee; /* 图片加载前的占位色 */
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .mini-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1;
 }
 
 .img-box {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 .img-box img {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  display: block;
 }
 </style>
