@@ -1,0 +1,46 @@
+name: Auto Build & Deploy
+
+# 触发条件：当有代码推送到 master 或 main 分支时
+on:
+  push:
+    branches:
+      - master
+      - main
+
+# 权限设置：允许 Action 修改你的仓库（用于发布）
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉取代码
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      # 2. 安装 Node.js 环境
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 3. 安装依赖
+      - name: Install Dependencies 🔧
+        run: npm install
+
+      # 4. ✨ 关键步骤：在云端运行 scan.js 生成数据 ✨
+      # 这样你只需要上传图片，不用自己在本地生成 json
+      - name: Run Photo Scan 📸
+        run: node scan.js
+
+      # 5. 打包 Vue 项目
+      - name: Build Project 🏗️
+        run: npm run build
+
+      # 6. 自动部署到 gh-pages 分支
+      - name: Deploy to GitHub Pages 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist # 部署打包生成的 dist 文件夹
