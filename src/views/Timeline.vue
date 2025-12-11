@@ -110,8 +110,13 @@ const goToDetail = (id) => {
             @click="goToDetail(photo.id)"
         >
           <div class="img-box">
-            <img
+<!--            <img
                 :src="getOptimizedUrl(photo.thumb || photo.url)"
+                loading="lazy"
+                :alt="photo.title"
+            />-->
+            <img
+                :src="photo.thumb || photo.url"
                 loading="lazy"
                 :alt="photo.title"
             />

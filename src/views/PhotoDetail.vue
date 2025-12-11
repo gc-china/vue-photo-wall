@@ -179,7 +179,8 @@ const onThumbLoad = (id) => thumbLoaded.value.add(id);
 
 <template>
   <div class="detail-container" v-if="photo">
-    <div class="blur-bg" :style="{ backgroundImage: `url(${getOptimizedUrl(photo.url)})` }"></div>
+<!--    <div class="blur-bg" :style="{ backgroundImage: `url(${getOptimizedUrl(photo.url)})` }"></div>-->
+    <div class="blur-bg" :style="{ backgroundImage: `url(${photo.url})` }"></div>
     <div class="blur-overlay"></div>
 
     <div class="main-layout">
@@ -210,9 +211,15 @@ const onThumbLoad = (id) => thumbLoaded.value.add(id);
           </button>
 
           <div class="panzoom-container">
-            <img
+<!--            <img
                 ref="mainImgRef"
                 :src="getOptimizedUrl(photo.url)"
+                :alt="photo.name"
+                class="main-img"
+            />-->
+            <img
+                ref="mainImgRef"
+                :src="photo.url"
                 :alt="photo.name"
                 class="main-img"
             />
@@ -232,7 +239,9 @@ const onThumbLoad = (id) => thumbLoaded.value.add(id);
                 :ref="(el) => { if (el) thumbnailRefs[p.id] = el }"
                 @click.stop="switchPhoto(p.id)"
             >
-              <img :src="getOptimizedUrl(p.url)" loading="lazy" :class="{ 'visible': thumbLoaded.has(p.id) }"
+<!--              <img :src="getOptimizedUrl(p.url)" loading="lazy" :class="{ 'visible': thumbLoaded.has(p.id) }"
+                   @load="onThumbLoad(p.id)"/>    -->
+              <img :src="p.url" loading="lazy" :class="{ 'visible': thumbLoaded.has(p.id) }"
                    @load="onThumbLoad(p.id)"/>
             </div>
           </div>

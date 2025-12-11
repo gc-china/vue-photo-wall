@@ -65,7 +65,8 @@ const goToAlbum = (name) => {
 
 <template>
   <div class="albums-page-container">
-    <div class="bg-layer" :style="{ backgroundImage: `url(${getOptimizedUrl(randomBg)})` }"></div>
+<!--    <div class="bg-layer" :style="{ backgroundImage: `url(${getOptimizedUrl(randomBg)})` }"></div>-->
+    <div class="bg-layer" :style="{ backgroundImage: `url(${randomBg})` }"></div>
     <div class="bg-overlay"></div>
 
     <div class="content-layer">
@@ -82,8 +83,12 @@ const goToAlbum = (name) => {
             :style="{ '--delay': index * 0.1 + 's' }"
             @click="goToAlbum(album.name)"
         >
-          <div class="card-image">
+<!--          <div class="card-image">
             <img :src="getOptimizedUrl(album.cover)" loading="lazy"/>
+            <div class="card-overlay"></div>
+          </div>-->
+          <div class="card-image">
+            <img :src="album.cover" loading="lazy"/>
             <div class="card-overlay"></div>
           </div>
 
