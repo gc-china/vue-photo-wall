@@ -80,16 +80,29 @@ watch(() => route.path, () => {
     </aside>
 
     <main class="main-content">
-      <router-view v-slot="{ Component }">
-        <Transition name="page-fade" mode="out-in">
-          <component :is="Component" />
-        </Transition>
+      <router-view v-slot="{ Component, route }">
+        <keep-alive>
+          <component
+              :is="Component"
+              :key="route.path"
+              v-if="route.meta.keepAlive !== false"
+          />
+        </keep-alive>
       </router-view>
     </main>
   </div>
 </template>
 
 <style scoped>
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
 /* --- Desktop 基础样式 (保持不变) --- */
 .layout-container { display: flex; height: 100vh; background: #f8f9fa; overflow: hidden; }
 .sidebar { width: 260px; flex-shrink: 0; background: #fff; border-right: 1px solid #eee; z-index: 100; transition: transform 0.3s ease; }
