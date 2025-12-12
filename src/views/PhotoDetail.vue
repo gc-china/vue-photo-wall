@@ -211,18 +211,18 @@ const onThumbLoad = (id) => thumbLoaded.value.add(id);
           </button>
 
           <div class="panzoom-container">
-            <img
+<!--            <img
                 ref="mainImgRef"
                 :src="getOptimizedUrl(photo.url)"
                 :alt="photo.name"
                 class="main-img"
-            />
-<!--            <img
+            />-->
+            <img
                 ref="mainImgRef"
                 :src="photo.url"
                 :alt="photo.name"
                 class="main-img"
-            />-->
+            />
           </div>
 
           <button class="nav-arrow right desktop-only" v-if="nextPhoto" @click.stop="switchPhoto(nextPhoto.id)">›

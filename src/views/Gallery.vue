@@ -175,17 +175,17 @@ const goToDetail = (id) => {
           <div class="img-container"
                :class="{ 'loaded': loadedImages.has(photo.id), 'skeleton-pulse': !loadedImages.has(photo.id) }">
 
-                        <img
+            <!--            <img
                             :src="getOptimizedUrl(photo.thumb || photo.url)"
                             loading="lazy"
                             :alt="photo.name"
                             @load="onImageLoad(photo.id)"
-                        />
-<!--            <img
+                        />-->
+            <img
                 :src="photo.thumb || photo.url"
                 loading="lazy"
                 :alt="photo.name"
-                @load="onImageLoad(photo.id)"/>-->
+                @load="onImageLoad(photo.id)"/>
             <div class="overlay">
               <div class="overlay-content">
                 <h3 class="photo-title">{{ photo.category }}</h3>
