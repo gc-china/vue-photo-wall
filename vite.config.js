@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
         // 🚀 核心逻辑：自动判断环境
         // 如果检测到 VERCEL 环境变量，使用根路径 '/'
         // 否则（GitHub Pages），使用 '/你的仓库名/' (请把 chrono-frame 换成你真实的仓库名)
-        base: env.VERCEL ? '/' : '/vue-photo-wall/',
+        base: '/',
 
         plugins: [
             vue(),
