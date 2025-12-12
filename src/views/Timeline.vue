@@ -1,24 +1,39 @@
 <script setup>
 
-import { useRouter } from 'vue-router';
+import {onBeforeRouteLeave, useRouter} from 'vue-router';
 // import photosData from '@/assets/photos.json'; // 你的数据源
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
-import { computed, onMounted } from 'vue';
+import {computed, nextTick, onActivated, onMounted} from 'vue';
 import {store} from "@/store.js";
 
 // 设置中文日期格式
 dayjs.locale('zh-cn');
-
+defineOptions({
+  name: 'TimelinePage'
+});
 const router = useRouter();
 onMounted(() => {
   store.initData();
 });
+const scrollCache = { scrollY: 0 };
 /**
  * 🚀 核心优化：图片 CDN 加速处理函数
  * 作用：将原图 URL 转换为压缩后的 WebP 小图 URL
  * 原理：使用 images.weserv.nl 免费服务进行实时压缩
  */
+
+
+// 离开前记录
+onBeforeRouteLeave((to, from, next) => {
+  scrollCache.scrollY = window.scrollY;
+  next();
+});
+onActivated(() => {
+  if (scrollCache.scrollY > 0) {
+    nextTick(() => window.scrollTo(0, scrollCache.scrollY));
+  }
+});
 const getOptimizedUrl = (url) => {
   if (!url) return '';
 

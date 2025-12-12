@@ -1,22 +1,20 @@
+<script>
+export default {
+  name: 'GalleryPage'
+}
+</script>
 <script setup>
 import {ref, computed, watch, onMounted, onActivated, nextTick} from 'vue';
 import {useRoute, useRouter, onBeforeRouteLeave} from 'vue-router';
 import {store} from '../store';
 import dayjs from 'dayjs';
 
-// 💡 给组件命名，确保 keep-alive 能识别并缓存它
-defineOptions({
-  name: 'GalleryPage'
-});
-
 const route = useRoute();
 const router = useRouter();
 
 // 全局缓存对象 (组件销毁了它还在)
 const scrollCache = {
-  scrollY: 0,
-  limit: 20,
-  category: '全部'
+  scrollY: 0
 };
 
 const allPhotos = computed(() => store.photos || []);
@@ -105,6 +103,7 @@ onMounted(() => {
 
 // 2. 从详情页返回时触发 (因为被 keep-alive 缓存了)
 onActivated(() => {
+  console.log('🚀 GalleryPage 被缓存激活了！位置应该没变。');
   // 恢复之前的滚动位置
   if (scrollCache.scrollY > 0) {
     // nextTick 确保 DOM 已经更新
@@ -117,8 +116,6 @@ onActivated(() => {
 // 3. 离开页面前保存状态
 onBeforeRouteLeave((to, from, next) => {
   scrollCache.scrollY = window.scrollY;
-  scrollCache.limit = displayLimit.value;
-  scrollCache.category = activeCategory.value;
   next();
 });
 
@@ -224,12 +221,10 @@ const goToDetail = (id) => router.push(`/photo/${id}`);
 .img-container {
   border-radius: 12px;
   overflow: hidden;
-  background: #222; /* 骨架屏底色 */
+  background: #333; /* 稍微亮一点的灰色，不像故障 */
   position: relative;
   width: 100%;
-
-  /* ✅ 关键修复：预设最小高度，防止加载前塌陷成黑条 */
-  min-height: 250px;
+  min-height: 250px; /* 必须保留！否则没加载时高度为0，回来位置就丢了 */
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
