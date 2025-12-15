@@ -34,7 +34,7 @@ watch(() => route.path, () => {
           <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
       </button>
-      <span class="mobile-title">ChronoFrame</span>
+      <span class="mobile-title">YuCheng</span>
       <div style="width: 24px;"></div>
     </header>
 
@@ -49,8 +49,8 @@ watch(() => route.path, () => {
           <div class="avatar-ring">
             <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix" alt="Avatar"/>
           </div>
-          <h1 class="brand-title">ChronoFrame</h1>
-          <p class="brand-slogan">Frozen moments in time.</p>
+          <h1 class="brand-title">YuCheng</h1>
+          <p class="brand-slogan">记录美好瞬间</p>
         </div>
 
         <nav class="nav-menu">
@@ -82,9 +82,6 @@ watch(() => route.path, () => {
           </div>
         </div>
 
-        <div class="footer">
-          © 2025 ChronoFrame<br>Designed by Vue3
-        </div>
       </div>
     </aside>
 
