@@ -52,9 +52,11 @@ onMounted(() => {
 
 // 监听数据加载，加载完后再设置随机背景
 watch(photosData, (newVal) => {
-  if (newVal.length > 0 && !randomBg.value) {
-    const randomIndex = Math.floor(Math.random() * newVal.length);
-    randomBg.value = newVal[randomIndex].url;
+  const isImage = (url) => /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
+  const imagesOnly = newVal.filter(photo => isImage(photo.url));
+  if (imagesOnly.length > 0) {
+    const randomIndex = Math.floor(Math.random() * imagesOnly.length);
+    randomBg.value = imagesOnly[randomIndex].url;
   }
 }, {immediate: true});
 
