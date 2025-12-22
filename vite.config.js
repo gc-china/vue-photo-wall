@@ -2,7 +2,6 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import viteCompression from 'vite-plugin-compression'
-import process from "gh-pages/lib/git.js";
 
 export default defineConfig(({ mode }) => {
     // 获取当前的环境变量
