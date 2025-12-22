@@ -4,13 +4,17 @@ import vue from '@vitejs/plugin-vue'
 import viteCompression from 'vite-plugin-compression'
 
 export default defineConfig(({ mode }) => {
-    // 获取当前的环境变量
-    const env = loadEnv(mode, process.cwd(), '')
+    // 🛠️ 修复核心：不使用 process.cwd()，改用标准 ESM 方式获取当前根目录
+    // 这样在 Vercel 环境下绝对安全
+    const root = fileURLToPath(new URL('.', import.meta.url))
+
+    // 加载环境变量
+    const env = loadEnv(mode, root, '')
 
     return {
         // 🚀 核心逻辑：自动判断环境
         // 如果检测到 VERCEL 环境变量，使用根路径 '/'
-        // 否则（GitHub Pages），使用 '/你的仓库名/' (请把 chrono-frame 换成你真实的仓库名)
+        // 否则（GitHub Pages），使用 '/vue-photo-wall/'
         base: env.VERCEL ? '/' : '/vue-photo-wall/',
 
         plugins: [
@@ -25,6 +29,7 @@ export default defineConfig(({ mode }) => {
         ],
         resolve: {
             alias: {
+                // 这里也复用了上面的逻辑，保持一致
                 '@': fileURLToPath(new URL('./src', import.meta.url))
             }
         },
