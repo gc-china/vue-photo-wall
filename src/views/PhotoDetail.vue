@@ -3,21 +3,36 @@ import {computed, onMounted, onUnmounted, ref, watch, nextTick} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {store} from '@/store.js';
 import dayjs from 'dayjs';
-import L from 'leaflet';
+// 动态引入 leaflet 和 panzoom 以优化首屏性能
 import 'leaflet/dist/leaflet.css';
-import panzoom from 'panzoom';
 
 const route = useRoute();
 const router = useRouter();
 
-// 简单的 CDN 处理 (可选)
-const getOptimizedUrl = (url) => url;
+// --- 性能监控 & 埋点 ---
+const trackEvent = (action, label, data = {}) => {
+  // 模拟埋点上报
+  console.log(`[Analytics] ${action}`, { label, ...data, timestamp: Date.now() });
+};
 
+const startTime = ref(Date.now());
+onMounted(() => {
+  const loadTime = Date.now() - startTime.value;
+  trackEvent('PageLoad', 'PhotoDetail', { duration: loadTime });
+});
+
+// --- 数据源 ---
 const photosData = computed(() => store.photos || []);
 const photo = computed(() => photosData.value.find(p => p.id === route.params.id));
 const currentIndex = computed(() => photosData.value.findIndex(p => p.id === route.params.id));
 const prevPhoto = computed(() => currentIndex.value > 0 ? photosData.value[currentIndex.value - 1] : null);
 const nextPhoto = computed(() => currentIndex.value < photosData.value.length - 1 ? photosData.value[currentIndex.value + 1] : null);
+
+// --- 图片加载状态 (骨架屏) ---
+const imgLoading = ref(true);
+watch(() => photo.value?.id, () => {
+  imgLoading.value = true;
+});
 
 // --- Live Photo ---
 const isPlaying = ref(false);
@@ -27,6 +42,7 @@ const togglePlay = () => {
   if (videoRef.value.paused) {
     videoRef.value.play();
     isPlaying.value = true;
+    trackEvent('Interaction', 'PlayVideo');
   } else {
     videoRef.value.pause();
     isPlaying.value = false;
@@ -34,12 +50,12 @@ const togglePlay = () => {
 };
 
 // --- 侧边栏与地图 ---
-const isInfoOpen = ref(true);
+const isInfoOpen = ref(true); // 默认桌面端展开
 const mapContainer = ref(null);
 let mapInstance = null;
 
-// 初始化地图
-const initMap = () => {
+// 初始化地图 (懒加载)
+const initMap = async () => {
   // 1. 清理旧地图
   if (mapInstance) {
     mapInstance.off();
@@ -48,6 +64,9 @@ const initMap = () => {
   }
   // 2. 检查条件: 必须有 gps 数据，且容器存在
   if (!photo.value?.exif?.gps || !mapContainer.value) return;
+
+  // 动态导入 Leaflet
+  const L = (await import('leaflet')).default;
 
   const {lat, lng} = photo.value.exif.gps;
 
@@ -58,9 +77,9 @@ const initMap = () => {
     scrollWheelZoom: false,
     dragging: false,
     doubleClickZoom: false
-  }).setView([lat, lng], 13); // 缩放级别 13
+  }).setView([lat, lng], 13);
 
-  // 4. 加载图层 (CartoDB Voyager 主题，很漂亮)
+  // 4. 加载图层
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 19
   }).addTo(mapInstance);
@@ -77,11 +96,12 @@ const initMap = () => {
 
 const toggleInfo = () => {
   isInfoOpen.value = !isInfoOpen.value;
-  // 侧边栏展开动画结束后，必须刷新地图尺寸，否则地图会灰屏
+  trackEvent('Interaction', 'ToggleInfo', { state: isInfoOpen.value ? 'open' : 'closed' });
+  
   if (isInfoOpen.value) {
     setTimeout(() => {
       if (mapInstance) mapInstance.invalidateSize();
-      else initMap(); // 如果之前没初始化成功，重试
+      else initMap();
     }, 400);
   }
 };
@@ -89,8 +109,8 @@ const toggleInfo = () => {
 // --- 切换照片 ---
 const switchPhoto = (targetId) => {
   if (targetId && targetId !== route.params.id) {
-    router.replace(`/photo/${targetId}`).catch(() => {
-    });
+    router.replace(`/photo/${targetId}`).catch(() => {});
+    trackEvent('Interaction', 'SwitchPhoto');
   }
 };
 
@@ -108,7 +128,12 @@ const handleKeydown = (e) => {
 onMounted(() => {
   store.initData();
   window.addEventListener('keydown', handleKeydown);
-  // 初始加载地图
+  
+  // 检查是否为移动端，如果是则默认收起侧边栏
+  if (window.innerWidth <= 900) {
+    isInfoOpen.value = false;
+  }
+  
   nextTick(() => {
     if (isInfoOpen.value) initMap();
   });
@@ -119,12 +144,15 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 // --- 缩放 (Panzoom) ---
 const mainImgRef = ref(null);
 let panzoomInstance = null;
-const initPanzoom = () => {
+const initPanzoom = async () => {
   if (panzoomInstance) {
     panzoomInstance.dispose();
     panzoomInstance = null;
   }
   if (mainImgRef.value && photo.value?.type !== 'video') {
+    // 动态导入 panzoom
+    const panzoom = (await import('panzoom')).default;
+    
     panzoomInstance = panzoom(mainImgRef.value, {
       maxZoom: 5, minZoom: 0.5, bounds: true, boundsPadding: 0.1, onTouch: () => false
     });
@@ -145,7 +173,6 @@ watch(() => route.params.id, (newId) => {
   if (!newId) return;
   isPlaying.value = false;
   nextTick(() => {
-    // 切换照片后，重新初始化所有组件
     if (isInfoOpen.value) initMap();
     initPanzoom();
     scrollToActiveThumbnail();
@@ -175,20 +202,23 @@ const handleTouchEnd = (e) => {
 
 <template>
   <div class="detail-container" v-if="photo">
+    <!-- 背景模糊层 -->
     <div class="blur-bg" :style="{ backgroundImage: `url(${photo.url})` }"></div>
     <div class="blur-overlay"></div>
 
     <div class="main-layout">
+      <!-- 预览区域 -->
       <div class="preview-area" @touchstart.passive="handleTouchStart" @touchend.passive="handleTouchEnd">
+        <!-- 顶部工具栏 -->
         <div class="toolbar">
-          <button class="icon-btn info-toggle" :class="{ 'active': isInfoOpen }" @click="toggleInfo">
+          <button class="icon-btn info-toggle" :class="{ 'active': isInfoOpen }" @click="toggleInfo" aria-label="Toggle Info">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="16" x2="12" y2="12"></line>
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
           </button>
-          <button class="icon-btn close-btn" @click="close">
+          <button class="icon-btn close-btn" @click="close" aria-label="Close">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -196,10 +226,16 @@ const handleTouchEnd = (e) => {
           </button>
         </div>
 
+        <!-- 主内容区 -->
         <div class="image-wrapper">
-          <button class="nav-arrow left desktop-only" v-if="prevPhoto" @click.stop="switchPhoto(prevPhoto.id)">‹
+          <!-- 左右导航箭头 -->
+          <button class="nav-arrow left desktop-only" v-if="prevPhoto" @click.stop="switchPhoto(prevPhoto.id)" aria-label="Previous">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
           </button>
 
+          <!-- 视频播放器 -->
           <div class="panzoom-container video-container" v-if="photo.type === 'video'" @click.stop="togglePlay">
             <video ref="videoRef" :src="photo.url" :poster="photo.thumb" loop muted playsinline
                    class="main-video"></video>
@@ -209,14 +245,30 @@ const handleTouchEnd = (e) => {
             </div>
           </div>
 
+          <!-- 图片查看器 -->
           <div class="panzoom-container" v-else>
-            <img ref="mainImgRef" :src="photo.url" :alt="photo.name" class="main-img"/>
+            <!-- 骨架屏加载状态 -->
+            <div v-if="imgLoading" class="skeleton-loader main-img-skeleton">
+              <div class="spinner"></div>
+            </div>
+            <img 
+              ref="mainImgRef" 
+              :src="photo.url" 
+              :alt="photo.name" 
+              class="main-img" 
+              v-show="!imgLoading"
+              @load="imgLoading = false"
+            />
           </div>
 
-          <button class="nav-arrow right desktop-only" v-if="nextPhoto" @click.stop="switchPhoto(nextPhoto.id)">›
+          <button class="nav-arrow right desktop-only" v-if="nextPhoto" @click.stop="switchPhoto(nextPhoto.id)" aria-label="Next">
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
           </button>
         </div>
 
+        <!-- 底部胶卷条 -->
         <div class="filmstrip-container">
           <div class="filmstrip" ref="filmstripRef">
             <div v-for="p in photosData" :key="p.id" class="thumb-item" :class="{ active: p.id === photo.id }"
@@ -227,8 +279,9 @@ const handleTouchEnd = (e) => {
         </div>
       </div>
 
+      <!-- 信息侧边栏 (支持移动端抽屉效果) -->
       <aside class="sidebar" :class="{ 'sidebar-closed': !isInfoOpen }">
-        <div class="mobile-handle"></div>
+        <div class="mobile-handle" @click="toggleInfo"></div>
 
         <div class="map-section-wrapper" v-if="photo.exif?.gps">
           <div ref="mapContainer" class="map-view"></div>
@@ -265,14 +318,21 @@ const handleTouchEnd = (e) => {
           <div class="info-block" v-if="photo.exif">
             <h3 class="block-title">拍摄参数</h3>
             <div class="params-grid">
-              <div class="param-item"><span class="p-label">焦距</span><span class="p-val">{{ photo.exif.focal }}</span>
+              <div class="param-item">
+                <span class="p-label">焦距</span>
+                <span class="p-val">{{ photo.exif.focal }}</span>
               </div>
-              <div class="param-item"><span class="p-label">光圈</span><span class="p-val">{{ photo.exif.fstop }}</span>
+              <div class="param-item">
+                <span class="p-label">光圈</span>
+                <span class="p-val">{{ photo.exif.fstop }}</span>
               </div>
-              <div class="param-item"><span class="p-label">快门</span><span class="p-val">{{
-                  photo.exif.shutter
-                }}</span></div>
-              <div class="param-item"><span class="p-label">ISO</span><span class="p-val">{{ photo.exif.iso }}</span>
+              <div class="param-item">
+                <span class="p-label">快门</span>
+                <span class="p-val">{{ photo.exif.shutter }}</span>
+              </div>
+              <div class="param-item">
+                <span class="p-label">ISO</span>
+                <span class="p-val">{{ photo.exif.iso }}</span>
               </div>
             </div>
           </div>
@@ -305,7 +365,7 @@ const handleTouchEnd = (e) => {
 </template>
 
 <style scoped>
-/* 保持你的基础布局 */
+/* 基础布局 */
 .detail-container {
   position: fixed;
   inset: 0;
@@ -322,6 +382,7 @@ const handleTouchEnd = (e) => {
   background-position: center;
   filter: blur(60px) brightness(0.3);
   opacity: 0.8;
+  will-change: transform;
 }
 
 .blur-overlay {
@@ -354,18 +415,23 @@ const handleTouchEnd = (e) => {
   height: 40px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   backdrop-filter: blur(5px);
-  transition: 0.2s;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .icon-btn:hover {
   background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
 }
 
 .icon-btn.active {
@@ -391,6 +457,36 @@ const handleTouchEnd = (e) => {
   overflow: hidden;
 }
 
+/* 骨架屏加载动画 */
+.skeleton-loader {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .panzoom-container {
   width: 100%;
   height: 100%;
@@ -406,6 +502,7 @@ const handleTouchEnd = (e) => {
   max-height: 100%;
   object-fit: contain;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  will-change: transform; /* 硬件加速 */
 }
 
 .video-container {
@@ -430,19 +527,21 @@ const handleTouchEnd = (e) => {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   z-index: 20;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
 }
 
-.nav-arrow.left {
-  left: 20px;
+.nav-arrow:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
-.nav-arrow.right {
-  right: 20px;
-}
+.nav-arrow.left { left: 20px; }
+.nav-arrow.right { right: 20px; }
 
 .live-badge {
   position: absolute;
@@ -516,11 +615,12 @@ const handleTouchEnd = (e) => {
   width: 50px;
   height: 50px;
   flex-shrink: 0;
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
   opacity: 0.4;
-  transition: 0.2s;
+  transition: all 0.2s;
   border: 2px solid transparent;
+  cursor: pointer;
 }
 
 .thumb-item img {
@@ -531,14 +631,13 @@ const handleTouchEnd = (e) => {
   transition: opacity 0.3s;
 }
 
-.thumb-item img.visible {
-  opacity: 1;
-}
+.thumb-item img.visible { opacity: 1; }
 
 .thumb-item.active {
   opacity: 1;
   border-color: #fff;
   transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 /* 侧边栏 */
@@ -550,7 +649,7 @@ const handleTouchEnd = (e) => {
   display: flex;
   flex-direction: column;
   color: #ddd;
-  transition: width 0.4s ease, opacity 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   overflow: hidden;
   white-space: nowrap;
 }
@@ -561,9 +660,8 @@ const handleTouchEnd = (e) => {
   border-left: none;
 }
 
-/* 🌟 地图区域关键样式 */
 .map-section-wrapper {
-  height: 200px; /* 强制高度，确保地图有空间显示 */
+  height: 200px;
   flex-shrink: 0;
   position: relative;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -572,19 +670,21 @@ const handleTouchEnd = (e) => {
 .map-view {
   width: 100%;
   height: 100%;
-  background: #222; /* 没加载出来时显示深色底 */
+  background: #222;
 }
 
 .map-overlay {
   position: absolute;
   inset: 0;
-  z-index: 400; /* 防止拖动地图影响页面体验 */
+  z-index: 400;
 }
 
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
   padding: 25px;
+  /* 平滑滚动 */
+  scroll-behavior: smooth;
 }
 
 .info-block {
@@ -604,14 +704,11 @@ const handleTouchEnd = (e) => {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  padding: 6px 0;
+  padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.info-list dt {
-  color: #999;
-}
-
+.info-list dt { color: #999; }
 .info-list dd {
   color: #fff;
   font-weight: 500;
@@ -627,6 +724,9 @@ const handleTouchEnd = (e) => {
   border-radius: 8px;
   font-size: 13px;
   color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .params-grid {
@@ -640,6 +740,11 @@ const handleTouchEnd = (e) => {
   padding: 10px;
   border-radius: 8px;
   text-align: center;
+  transition: background 0.2s;
+}
+
+.param-item:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .p-label {
@@ -659,30 +764,43 @@ const handleTouchEnd = (e) => {
   display: none;
 }
 
+/* 移动端适配 */
 @media (max-width: 900px) {
   .main-layout {
     flex-direction: column;
   }
 
   .preview-area {
-    flex: 2;
+    flex: 1;
+    padding-bottom: 60px; /* 留出底部空间 */
   }
 
   .desktop-only {
     display: none;
   }
 
+  /* 移动端改为底部抽屉模式 */
   .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
-    flex: 1;
+    height: 60vh; /* 展开高度 */
     border-left: none;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px 20px 0 0;
+    z-index: 100;
+    transform: translateY(0);
+    opacity: 1;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
   }
 
   .sidebar.sidebar-closed {
-    flex: 0;
-    height: 0;
+    width: 100%;
+    height: 60vh;
+    transform: translateY(100%);
+    opacity: 1; /* 保持不透明，只是移出屏幕 */
   }
 
   .mobile-handle {
@@ -691,7 +809,8 @@ const handleTouchEnd = (e) => {
     height: 4px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 2px;
-    margin: 10px auto 0;
+    margin: 10px auto;
+    cursor: pointer;
   }
 }
 </style>

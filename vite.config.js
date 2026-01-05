@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import viteCompression from 'vite-plugin-compression'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => {
     // 🛠️ 修复核心：不使用 process.cwd()，改用标准 ESM 方式获取当前根目录
@@ -25,8 +26,50 @@ export default defineConfig(({ mode }) => {
                 threshold: 10240,
                 algorithm: 'gzip',
                 ext: '.gz',
+            }),
+            VitePWA({
+              registerType: 'autoUpdate',
+              includeAssets: ['avatar.svg', 'photos.json'],
+              manifest: {
+                name: 'YuCheng Photo Wall',
+                short_name: 'YuCheng',
+                description: 'A personal photo gallery',
+                theme_color: '#ffffff',
+                icons: [
+                  {
+                    src: 'avatar.svg',
+                    sizes: '192x192',
+                    type: 'image/svg+xml'
+                  },
+                  {
+                    src: 'avatar.svg',
+                    sizes: '512x512',
+                    type: 'image/svg+xml'
+                  }
+                ]
+              },
+              workbox: {
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,json,vue,txt,woff2}'],
+                runtimeCaching: [
+                    {
+                        urlPattern: ({ url }) => url.pathname.startsWith('/photos/'),
+                        handler: 'CacheFirst',
+                        options: {
+                            cacheName: 'image-cache',
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 Days
+                            }
+                        }
+                    }
+                ]
+              }
             })
         ],
+        test: {
+            environment: 'happy-dom',
+            globals: true,
+        },
         resolve: {
             alias: {
                 // 这里也复用了上面的逻辑，保持一致

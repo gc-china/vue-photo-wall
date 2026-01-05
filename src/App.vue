@@ -87,182 +87,202 @@ watch(() => route.path, () => {
 
     <main class="main-content">
       <router-view v-slot="{ Component }">
-        <keep-alive include="GalleryPage,TimelinePage">
-          <component :is="Component"/>
-        </keep-alive>
+        <transition name="fade" mode="out-in">
+          <keep-alive include="GalleryPage,TimelinePage">
+            <component :is="Component"/>
+          </keep-alive>
+        </transition>
       </router-view>
     </main>
   </div>
 </template>
 
 <style scoped>
-body {
+:global(body) {
   margin: 0;
   padding: 0;
-  background-color: #000;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-body);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
+:global(::-webkit-scrollbar) {
+  width: 8px;
 }
 
-::-webkit-scrollbar-track {
-  background: #000;
+:global(::-webkit-scrollbar-track) {
+  background: var(--scrollbar-track);
 }
 
-::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 3px;
+:global(::-webkit-scrollbar-thumb) {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
 }
 
-/* --- Desktop 基础样式 (保持不变) --- */
+:global(::-webkit-scrollbar-thumb:hover) {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* --- Layout --- */
 .layout-container {
   display: flex;
-  min-height: 100vh; /* 改为 min-height */
-  background: #f8f9fa;
+  min-height: 100vh;
+  background: var(--bg-layout);
+  transition: background-color 0.3s;
 }
 
 .sidebar {
-  width: 260px;
+  width: 280px;
   flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #eee;
-  z-index: 100;
-
-  /* 关键修改：让侧边栏钉在屏幕左侧，不随内容滚走 */
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  z-index: 50;
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow-y: auto; /* 侧边栏自己内部可以滚 */
+  overflow-y: auto;
+  transition: background-color 0.3s, border-color 0.3s;
 }
 
 .sidebar-inner {
   height: 100%;
-  padding: 40px 24px;
+  padding: 48px 32px;
   display: flex;
   flex-direction: column;
-  position: relative;
 }
 
 .profile-section {
-  margin-bottom: 40px;
-  text-align: center;
+  margin-bottom: 48px;
+  text-align: left;
 }
 
 .avatar-ring {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 15px;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
   border-radius: 50%;
-  padding: 4px;
-  border: 1px solid #eee;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .avatar-ring img {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
   object-fit: cover;
 }
 
 .brand-title {
-  font-family: 'Georgia', serif;
-  font-size: 22px;
-  color: #333;
-  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
 .brand-slogan {
-  font-size: 12px;
-  color: #999;
-  margin-top: 5px;
-  font-style: italic;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 400;
 }
 
 .nav-menu {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 40px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 14px;
+  padding: 12px 16px;
   text-decoration: none;
-  color: #666;
-  font-size: 14px;
-  border-radius: 8px;
-  transition: all 0.2s;
+  color: var(--text-secondary);
+  font-size: 15px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
   font-weight: 500;
+  border: 1px solid transparent;
 }
 
 .nav-item:hover {
-  background: #f3f3f5;
-  color: #000;
+  background: var(--nav-hover);
+  color: var(--text-primary);
 }
 
 .nav-item.active {
-  background: #18181b;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--nav-active);
+  color: var(--bg-sidebar);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nav-item .icon {
+  font-size: 18px;
 }
 
 .search-section {
-  margin-bottom: auto;
-  padding-top: 10px;
-  border-top: 1px solid #f5f5f5;
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
 }
 
 .search-input-wrapper {
   position: relative;
-  background: #f1f5f9;
-  border-radius: 20px;
+  background: var(--input-bg);
+  border-radius: 14px;
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  transition: all 0.3s ease;
+  padding: 0 14px;
+  transition: all 0.2s ease;
   border: 1px solid transparent;
+  height: 44px;
 }
 
 .search-input-wrapper:focus-within {
-  background: #fff;
-  border-color: #18181b;
+  background: var(--bg-sidebar);
+  border-color: var(--text-primary);
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 
 .search-icon {
-  color: #a1a1aa;
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
 .search-input-wrapper input {
   width: 100%;
-  padding: 10px 8px;
+  padding: 0 10px;
   border: none;
   background: transparent;
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
-  color: #333;
-}
-
-.footer {
-  margin-top: auto;
-  font-size: 11px;
-  color: #ccc;
-  text-align: center;
-  line-height: 1.5;
+  color: var(--input-text);
+  height: 100%;
 }
 
 .main-content {
   flex: 1;
   position: relative;
+  width: 100%;
 }
 
-/* 默认隐藏手机端元素 */
+/* Page Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Mobile Header */
 .mobile-header {
   display: none;
 }
@@ -275,99 +295,105 @@ body {
   display: none;
 }
 
-/* --- Mobile 响应式样式 --- */
+/* --- Mobile Responsive --- */
 @media (max-width: 768px) {
   .layout-container {
     flex-direction: column;
   }
 
-  /* 1. 顶部导航栏：固定在顶部 */
   .mobile-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.95);
+    padding: 0 20px;
+    height: 64px;
+    background: var(--bg-sidebar);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--border-color);
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    z-index: 200;
+    z-index: 100;
   }
 
   .menu-btn {
     background: none;
     border: none;
     cursor: pointer;
-    color: #333;
-    padding: 0;
+    color: var(--text-primary);
+    padding: 8px;
+    margin-left: -8px;
   }
 
   .mobile-title {
-    font-weight: bold;
-    font-family: 'Georgia', serif;
+    font-weight: 600;
+    font-family: 'Playfair Display', serif;
     font-size: 18px;
+    color: var(--text-primary);
   }
 
-  /* 给主内容加顶部内边距，防止被 header 挡住 */
   .main-content {
     margin-left: 0;
-    padding-top: 60px; /* 留出 header 的高度 */
+    padding-top: 64px;
   }
 
-  /* 2. 侧边栏抽屉化 */
   .sidebar {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
     height: 100vh;
-    width: 280px;
-    background: #ffffff;
+    width: 300px;
+    background: var(--bg-sidebar);
     z-index: 1000;
-    /* 默认移出屏幕左侧 */
     transform: translate3d(-100%, 0, 0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
     box-shadow: none;
     border-right: none;
   }
 
-  /* 激活状态：滑入 */
   .sidebar.open {
     transform: translate3d(0, 0, 0);
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.1);
   }
 
-  /* 手机端侧边栏内的关闭按钮 */
   .close-btn-mobile {
     display: block;
     position: absolute;
-    top: 10px;
-    right: 15px;
+    top: 20px;
+    right: 20px;
     background: none;
     border: none;
-    font-size: 24px;
-    color: #999;
+    font-size: 28px;
+    color: var(--text-secondary);
     cursor: pointer;
+    padding: 10px;
   }
 
-  /* 3. 遮罩层 */
   .drawer-overlay {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.4);
     z-index: 999;
     opacity: 0;
-    pointer-events: none; /* 不显示时如果不加这个会挡住点击 */
+    pointer-events: none;
     transition: opacity 0.3s ease;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
   }
 
-  /* 遮罩层激活 */
   .drawer-overlay.show {
     opacity: 1;
     pointer-events: auto;
+  }
+  
+  .profile-section {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .avatar-ring {
+    margin: 0 auto 16px;
   }
 }
 </style>

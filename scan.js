@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import ffprobePath from 'ffprobe-static';
+import crypto from 'crypto';
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath.path);
@@ -170,7 +171,7 @@ async function scanPhotos() {
             }
 
             let photoData = {
-                id: Math.random().toString(36).substr(2, 9),
+                id: crypto.createHash('md5').update(`${album}/${file}`).digest('hex').substring(0, 8),
                 url: finalUrl,
                 thumb: thumbUrl, // 现在的 thumbUrl 绝对和硬盘上的文件名一致
                 name: file,
