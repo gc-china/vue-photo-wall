@@ -3,13 +3,12 @@ import {ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted
 import {useRoute, useRouter, onBeforeRouteLeave} from 'vue-router';
 import {store} from '../store';
 import dayjs from 'dayjs';
-import PhotoCard from '../components/PhotoCard.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 
 const route = useRoute();
 const router = useRouter();
 
-// 全局缓存对象 (组件销毁了它还在)
+// 全局缓存对象
 const scrollCache = {
   scrollY: 0,
   category: '',
@@ -25,7 +24,6 @@ const bottomObserver = ref(null);
 // 监听路由切换分类
 watch(() => route.params.name, (newName) => {
   const newCat = newName || '全部';
-  // 只有真正切换分类时才重置，从详情页返回时不重置
   if (newCat !== scrollCache.category) {
     activeCategory.value = newCat;
     displayLimit.value = PAGE_SIZE;
@@ -58,36 +56,91 @@ const loadMore = () => {
   }
 };
 
-const onImageLoad = (id) => {
-  // Logic handled in component, but can track metrics here if needed
+// --- Modal Logic ---
+const isModalOpen = ref(false);
+const currentPhoto = ref(null);
+
+const openModal = (photo) => {
+  currentPhoto.value = photo;
+  isModalOpen.value = true;
+  document.body.style.overflow = 'hidden';
 };
 
-// 悬浮日期
-const currentDateLabel = ref('');
-const showDateLabel = ref(false);
-let scrollTimer = null;
-const handleScroll = () => {
-  showDateLabel.value = true;
-  const cards = document.querySelectorAll('.photo-card');
-  for (const card of cards) {
-    const rect = card.getBoundingClientRect();
-    if (rect.top >= 0 && rect.top < window.innerHeight) {
-      const dateStr = card.getAttribute('data-date');
-      if (dateStr) currentDateLabel.value = dayjs(dateStr).format('YYYY年 MM月');
-      break;
-    }
+const closeModal = () => {
+  isModalOpen.value = false;
+  document.body.style.overflow = 'auto';
+};
+
+const handleKeyDown = (e) => {
+  if (e.key === 'Escape' && isModalOpen.value) {
+    closeModal();
   }
-  clearTimeout(scrollTimer);
-  scrollTimer = setTimeout(() => showDateLabel.value = false, 1500);
 };
 
-// --- 生命周期 ---
+// --- Like Logic (Simulated) ---
+const likedPhotos = ref(new Set());
 
-// 1. 首次进入
+const toggleLike = (photo, event) => {
+  event.stopPropagation();
+  if (likedPhotos.value.has(photo.id)) {
+    likedPhotos.value.delete(photo.id);
+  } else {
+    likedPhotos.value.add(photo.id);
+  }
+};
+
+const isLiked = (id) => likedPhotos.value.has(id);
+
+// --- Back to Top Logic ---
+const showBackToTop = ref(false);
+const handleScroll = () => {
+  showBackToTop.value = window.scrollY > 300;
+};
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// Format helpers
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = dayjs(dateString);
+  const now = dayjs();
+  const diffDays = now.diff(date, 'day');
+
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  if (diffDays < 7) return `${diffDays}天前`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}周前`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}个月前`;
+  return `${Math.floor(diffDays / 365)}年前`;
+};
+
+// --- Image Error Handling ---
+const handleImageError = (e) => {
+  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veS4rTwvdGV4dD48L3N2Zz4=';
+};
+
+// --- Masonry Layout Logic ---
+const columnCount = ref(4);
+const updateColumnCount = () => {
+  const w = window.innerWidth;
+  if (w < 480) columnCount.value = 1;
+  else if (w < 768) columnCount.value = 2;
+  else if (w < 1200) columnCount.value = 3;
+  else columnCount.value = 4;
+};
+
+const columns = computed(() => {
+  const cols = Array.from({ length: columnCount.value }, () => []);
+  visiblePhotos.value.forEach((photo, index) => {
+    cols[index % columnCount.value].push(photo);
+  });
+  return cols;
+});
+
+// --- Lifecycle ---
 onMounted(() => {
   store.initData();
-
-  // 恢复之前的数据量
   if (scrollCache.limit > PAGE_SIZE) {
     displayLimit.value = scrollCache.limit;
   }
@@ -100,16 +153,15 @@ onMounted(() => {
 
   updateColumnCount();
   window.addEventListener('resize', updateColumnCount);
+  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('scroll', handleScroll);
 });
 
-// 2. 从详情页返回时触发 (因为被 keep-alive 缓存了)
 onActivated(() => {
-  window.addEventListener('scroll', handleScroll, {passive: true});
   window.addEventListener('resize', updateColumnCount);
-  
-  // 恢复之前的滚动位置
+  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('scroll', handleScroll);
   if (scrollCache.scrollY > 0) {
-    // nextTick 确保 DOM 已经更新
     nextTick(() => {
       window.scrollTo(0, scrollCache.scrollY);
     });
@@ -117,70 +169,73 @@ onActivated(() => {
 });
 
 onDeactivated(() => {
-  window.removeEventListener('scroll', handleScroll);
   window.removeEventListener('resize', updateColumnCount);
+  window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('scroll', handleScroll);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
   window.removeEventListener('resize', updateColumnCount);
+  window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('scroll', handleScroll);
 });
 
-// 3. 离开页面前保存状态
 onBeforeRouteLeave((to, from, next) => {
   scrollCache.scrollY = window.scrollY;
   scrollCache.limit = displayLimit.value;
   next();
 });
-
-const goToDetail = (id) => router.push(`/photo/${id}`);
-
-// --- Masonry Layout Logic ---
-const columnCount = ref(5);
-const updateColumnCount = () => {
-  const w = window.innerWidth;
-  if (w < 600) columnCount.value = 1;
-  else if (w < 900) columnCount.value = 2;
-  else if (w < 1200) columnCount.value = 3;
-  else if (w < 1600) columnCount.value = 4;
-  else columnCount.value = 5;
-};
-
-const columns = computed(() => {
-  const cols = Array.from({ length: columnCount.value }, () => []);
-  visiblePhotos.value.forEach((photo, index) => {
-    cols[index % columnCount.value].push(photo);
-  });
-  return cols;
-});
 </script>
 
 <template>
   <div class="gallery-container">
-    <Transition name="fade">
-      <div v-show="showDateLabel && currentDateLabel" class="floating-date-badge">{{ currentDateLabel }}</div>
-    </Transition>
-
-    <header class="gallery-header" v-if="!store.searchQuery">
-      <div class="header-content">
-        <h2 class="category-title">{{ activeCategory }}</h2>
-        <p class="stats">
-          {{ allFilteredPhotos.length }} Frames
-        </p>
-      </div>
+    
+    <!-- Header -->
+    <header class="header">
+        <h1>美好时光照片墙</h1>
+        <p>记录生活中的每一个精彩瞬间，分享美好，传递温暖</p>
     </header>
 
+    <!-- Controls/Filter -->
+    <div class="controls" v-if="!store.searchQuery">
+       <h2 class="current-category">{{ activeCategory }}</h2>
+    </div>
     <div v-else class="search-feedback">Searching for "<span>{{ store.searchQuery }}</span>"</div>
 
-    <div class="masonry-wrapper">
+    <!-- Photo Grid -->
+    <div class="photo-gallery">
       <div v-for="(col, colIndex) in columns" :key="colIndex" class="masonry-column">
-        <PhotoCard
-          v-for="photo in col"
-          :key="photo.id"
-          :photo="photo"
-          @click="goToDetail"
-          @load="onImageLoad"
-        />
+        <div 
+          v-for="photo in col" 
+          :key="photo.id" 
+          class="photo-item"
+          @click="openModal(photo)"
+        >
+          <img 
+            :src="photo.thumb || photo.url" 
+            :alt="photo.name" 
+            loading="lazy"
+            @error="handleImageError"
+          >
+          <div class="photo-info">
+            <div class="photo-category">{{ photo.category }}</div>
+            <h3 class="photo-title">{{ photo.name }}</h3>
+            <p class="photo-desc" v-if="photo.description">{{ photo.description }}</p>
+            <div class="photo-stats">
+              <button 
+                class="like-btn" 
+                :class="{ liked: isLiked(photo.id) }" 
+                @click="toggleLike(photo, $event)"
+              >
+                <svg class="heart-icon" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                <span class="like-count">{{ (photo.likes || 0) + (isLiked(photo.id) ? 1 : 0) }}</span>
+              </button>
+              <span class="photo-date">{{ formatDate(photo.date) }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -188,40 +243,93 @@ const columns = computed(() => {
       <LoadingSpinner v-if="displayLimit < allFilteredPhotos.length" />
       <span v-else class="end-text">The End.</span>
     </div>
+
+    <!-- Modal -->
+    <div class="modal" :class="{ active: isModalOpen }" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <button class="close-btn" @click="closeModal">
+          <svg class="close-icon" viewBox="0 0 24 24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+        <img 
+          v-if="currentPhoto" 
+          :src="currentPhoto.url" 
+          :alt="currentPhoto.name"
+          @error="handleImageError"
+        >
+        <div class="modal-info" v-if="currentPhoto">
+          <h3 class="modal-title">{{ currentPhoto.name }}</h3>
+          <p class="modal-desc">{{ currentPhoto.description || '暂无描述' }}</p>
+          <div class="modal-meta">
+             <span class="modal-date">{{ formatDate(currentPhoto.date) }}</span>
+             <span class="modal-model" v-if="currentPhoto.exif?.model">Shot on {{ currentPhoto.exif.model }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back to Top -->
+    <button class="back-to-top" :class="{ visible: showBackToTop }" @click="scrollToTop">
+        <svg class="arrow-up-icon" viewBox="0 0 24 24">
+            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+        </svg>
+    </button>
+
   </div>
 </template>
 
 <style scoped>
+/* Base Styles from photo-wall.html adapted */
 .gallery-container {
-  padding: 80px 40px 40px;
-  max-width: 1920px;
-  margin: 0 auto;
   min-height: 100vh;
+  background: linear-gradient(135deg, #fff9f0 0%, #fef8e7 100%);
+  padding-bottom: 40px;
 }
 
-.gallery-header {
-  margin-bottom: 40px;
-  padding: 0 10px;
-  animation: slideDown 0.6s ease-out;
+/* Header */
+.header {
+  text-align: center;
+  padding: 60px 20px 40px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 182, 193, 0.2);
+  margin-bottom: 30px;
 }
 
-.category-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-  margin: 0;
-  color: #111;
-  line-height: 1.2;
+.header h1 {
+  font-size: 3.2em;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+  margin-top: 0;
 }
 
-.stats {
-  color: #666;
-  font-size: 0.9rem;
-  margin-top: 5px;
-  font-weight: 500;
+.header p {
+  font-size: 1.2em;
+  color: #5d6d7e;
+  font-weight: 300;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Controls */
+.controls {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.current-category {
+  font-size: 2em;
+  color: #2c3e50;
+  font-weight: 600;
 }
 
 .search-feedback {
+  text-align: center;
   padding: 20px;
   font-size: 1.2rem;
   color: #333;
@@ -231,10 +339,13 @@ const columns = computed(() => {
   font-weight: bold;
 }
 
-/* --- Masonry JS Implementation --- */
-.masonry-wrapper {
+/* Photo Gallery Grid */
+.photo-gallery {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 20px;
   display: flex;
-  gap: 24px;
+  gap: 25px;
   align-items: flex-start;
 }
 
@@ -242,8 +353,262 @@ const columns = computed(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 25px;
   min-width: 0;
+}
+
+/* Photo Item Card */
+.photo-item {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+}
+
+.photo-item:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+  z-index: 10;
+}
+
+.photo-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.photo-item:hover img {
+  transform: scale(1.05);
+}
+
+.photo-info {
+  padding: 20px;
+  background: white;
+  position: relative;
+  z-index: 2;
+}
+
+.photo-title {
+  font-size: 1.15em;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.photo-category {
+  display: inline-block;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+  color: #2c3e50;
+  font-size: 0.85em;
+  font-weight: 500;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+
+.photo-desc {
+  font-size: 0.95em;
+  color: #7f8c8d;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.photo-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 15px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.like-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #e74c3c;
+  font-size: 0.95em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 8px 12px;
+  border-radius: 20px;
+}
+
+.like-btn:hover {
+  background: rgba(231, 76, 60, 0.1);
+  transform: scale(1.05);
+}
+
+.like-btn.liked {
+  background: rgba(231, 76, 60, 0.15);
+}
+
+.heart-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  transition: transform 0.3s ease;
+}
+
+.like-btn:hover .heart-icon {
+  transform: scale(1.2);
+}
+
+.photo-date {
+  font-size: 0.85em;
+  color: #95a5a6;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+  opacity: 1;
+}
+
+.modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 70px rgba(0,0,0,0.3);
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal.active .modal-content {
+  transform: scale(1);
+}
+
+.modal img {
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  background: #000;
+}
+
+.modal-info {
+  padding: 30px;
+  background: white;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+}
+
+.modal-desc {
+  font-size: 1.1em;
+  color: #5d6d7e;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.modal-meta {
+  display: flex;
+  gap: 20px;
+  color: #95a5a6;
+  font-size: 0.9em;
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.close-btn:hover {
+  background: white;
+  transform: scale(1.1);
+}
+
+.close-icon {
+  width: 24px;
+  height: 24px;
+  fill: #2c3e50;
+}
+
+/* Back to Top */
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+  z-index: 100;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.back-to-top:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 35px rgba(0,0,0,0.3);
+}
+
+.arrow-up-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
 }
 
 .loading-trigger {
@@ -260,61 +625,35 @@ const columns = computed(() => {
   text-transform: uppercase;
 }
 
-.floating-date-badge {
-  position: fixed;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 8px 20px;
-  border-radius: 30px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #333;
-  z-index: 100;
-  pointer-events: none;
-  border: 1px solid rgba(0,0,0,0.05);
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translate(-50%, -10px);
-}
-
-/* 响应式 */
-@media (max-width: 1600px) {
-  /* Column count handled by JS */
-}
-
+/* Responsive */
 @media (max-width: 768px) {
-  .gallery-container {
-    padding: 70px 16px 20px;
+  .header {
+    padding: 40px 20px 30px;
   }
-
-  .masonry-wrapper {
-    gap: 12px;
+  
+  .header h1 {
+    font-size: 2.5em;
+  }
+  
+  .photo-gallery {
+    gap: 15px;
+    padding: 0 15px;
   }
   
   .masonry-column {
-    gap: 12px;
+    gap: 15px;
   }
-
-  .category-title {
-    font-size: 1.8rem;
+  
+  .modal-content {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  
+  .modal img {
+    max-height: 60vh;
   }
 }
 </style>
