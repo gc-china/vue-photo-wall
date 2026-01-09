@@ -2,7 +2,6 @@
 import {ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick} from 'vue';
 import {useRoute, useRouter, onBeforeRouteLeave} from 'vue-router';
 import {store} from '../store';
-import dayjs from 'dayjs';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 
 const route = useRoute();
@@ -77,20 +76,6 @@ const handleKeyDown = (e) => {
   }
 };
 
-// --- Like Logic (Simulated) ---
-const likedPhotos = ref(new Set());
-
-const toggleLike = (photo, event) => {
-  event.stopPropagation();
-  if (likedPhotos.value.has(photo.id)) {
-    likedPhotos.value.delete(photo.id);
-  } else {
-    likedPhotos.value.add(photo.id);
-  }
-};
-
-const isLiked = (id) => likedPhotos.value.has(id);
-
 // --- Back to Top Logic ---
 const showBackToTop = ref(false);
 const handleScroll = () => {
@@ -98,21 +83,6 @@ const handleScroll = () => {
 };
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-// Format helpers
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = dayjs(dateString);
-  const now = dayjs();
-  const diffDays = now.diff(date, 'day');
-
-  if (diffDays === 0) return '今天';
-  if (diffDays === 1) return '昨天';
-  if (diffDays < 7) return `${diffDays}天前`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}周前`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)}个月前`;
-  return `${Math.floor(diffDays / 365)}年前`;
 };
 
 // --- Image Error Handling ---
@@ -193,7 +163,6 @@ onBeforeRouteLeave((to, from, next) => {
     <!-- Header -->
     <header class="header">
         <h1>美好时光照片墙</h1>
-        <p>记录生活中的每一个精彩瞬间，分享美好，传递温暖</p>
     </header>
 
     <!-- Controls/Filter -->
@@ -217,24 +186,6 @@ onBeforeRouteLeave((to, from, next) => {
             loading="lazy"
             @error="handleImageError"
           >
-          <div class="photo-info">
-            <div class="photo-category">{{ photo.category }}</div>
-            <h3 class="photo-title">{{ photo.name }}</h3>
-            <p class="photo-desc" v-if="photo.description">{{ photo.description }}</p>
-            <div class="photo-stats">
-              <button 
-                class="like-btn" 
-                :class="{ liked: isLiked(photo.id) }" 
-                @click="toggleLike(photo, $event)"
-              >
-                <svg class="heart-icon" viewBox="0 0 24 24">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-                <span class="like-count">{{ (photo.likes || 0) + (isLiked(photo.id) ? 1 : 0) }}</span>
-              </button>
-              <span class="photo-date">{{ formatDate(photo.date) }}</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -258,14 +209,6 @@ onBeforeRouteLeave((to, from, next) => {
           :alt="currentPhoto.name"
           @error="handleImageError"
         >
-        <div class="modal-info" v-if="currentPhoto">
-          <h3 class="modal-title">{{ currentPhoto.name }}</h3>
-          <p class="modal-desc">{{ currentPhoto.description || '暂无描述' }}</p>
-          <div class="modal-meta">
-             <span class="modal-date">{{ formatDate(currentPhoto.date) }}</span>
-             <span class="modal-model" v-if="currentPhoto.exif?.model">Shot on {{ currentPhoto.exif.model }}</span>
-          </div>
-        </div>
       </div>
     </div>
 

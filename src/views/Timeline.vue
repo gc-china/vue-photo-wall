@@ -143,14 +143,6 @@ const handleImageError = (e) => {
           :alt="currentPhoto.name"
           @error="handleImageError"
         >
-        <div class="modal-info" v-if="currentPhoto">
-          <h3 class="modal-title">{{ currentPhoto.name }}</h3>
-          <p class="modal-desc">{{ currentPhoto.description || '暂无描述' }}</p>
-          <div class="modal-meta">
-             <span class="modal-date">{{ formatDate(currentPhoto.date) }}</span>
-             <span class="modal-model" v-if="currentPhoto.exif?.model">Shot on {{ currentPhoto.exif.model }}</span>
-          </div>
-        </div>
       </div>
     </div>
 
