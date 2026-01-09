@@ -1,10 +1,8 @@
 <script setup>
-
 import {onBeforeRouteLeave, useRouter} from 'vue-router';
-// import photosData from '@/assets/photos.json'; // 你的数据源
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
-import {computed, nextTick, onActivated, onMounted} from 'vue';
+import {computed, nextTick, onActivated, onMounted, ref, onUnmounted} from 'vue';
 import {store} from "@/store.js";
 
 // 设置中文日期格式
@@ -15,14 +13,14 @@ defineOptions({
 const router = useRouter();
 onMounted(() => {
   store.initData();
+  window.addEventListener('keydown', handleKeyDown);
 });
-const scrollCache = { scrollY: 0 };
-/**
- * 🚀 核心优化：图片 CDN 加速处理函数
- * 作用：将原图 URL 转换为压缩后的 WebP 小图 URL
- * 原理：使用 images.weserv.nl 免费服务进行实时压缩
- */
 
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+const scrollCache = { scrollY: 0 };
 
 // 离开前记录
 onBeforeRouteLeave((to, from, next) => {
@@ -34,41 +32,6 @@ onActivated(() => {
     nextTick(() => window.scrollTo(0, scrollCache.scrollY));
   }
 });
-const getOptimizedUrl = (url) => {
-  if (!url) return '';
-
-  // 1. 如果是网络图片(http开头)，直接返回
-  if (url.startsWith('http')) return url;
-
-  // 2. 配置你的 GitHub 信息
-  const user = 'gc-china';       // 用户名
-  const repo = 'vue-photo-wall'; // 仓库名
-  const branch = 'main';         // 分支名 (注意是 main 还是 master)
-
-  // 3. 处理路径
-  let path = url;
-
-  // 💡 关键修正：如果路径以 / 开头，去掉它
-  if (path.startsWith('/')) {
-    path = path.slice(1);
-  }
-
-  // 💡 关键修正：Vite 项目的静态资源通常在 public 文件夹里
-  // 如果 GitHub 根目录下没有 thumbs 文件夹，而是在 public/thumbs，这里就要补上
-  // 我们判断：如果不是以 public 开头，就给它拼上
-  if (!path.startsWith('public/')) {
-    path = 'public/' + path;
-  }
-
-  // 4. 生成 jsDelivr 链接 (中文自动编码)
-  // encodeURI 处理整个路径，确保中文被转换
-  // 使用 encodeURIComponent 需要单独处理每一段，简单起见用 encodeURI 即可，
-  // 或者让 jsDelivr 自己处理（通常浏览器访问时会自动 encode）
-  // 为了代码稳健，我们手动 encode 路径部分
-  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
-
-  return `https://cdn.jsdelivr.net/gh/${user}/${repo}@${branch}/${encodedPath}`;
-};
 
 // --- 数据处理：按 年-月-日 分组 ---
 const timelineGroups = computed(() => {
@@ -99,9 +62,35 @@ const timelineGroups = computed(() => {
   return Object.values(groups).sort((a, b) => b.timestamp - a.timestamp);
 });
 
-// 跳转详情
-const goToDetail = (id) => {
-  router.push(`/photo/${id}`);
+// --- Modal Logic ---
+const isModalOpen = ref(false);
+const currentPhoto = ref(null);
+
+const openModal = (photo) => {
+  currentPhoto.value = photo;
+  isModalOpen.value = true;
+  document.body.style.overflow = 'hidden';
+};
+
+const closeModal = () => {
+  isModalOpen.value = false;
+  document.body.style.overflow = 'auto';
+};
+
+const handleKeyDown = (e) => {
+  if (e.key === 'Escape' && isModalOpen.value) {
+    closeModal();
+  }
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  return dayjs(dateString).format('YYYY年MM月DD日');
+};
+
+// --- Image Error Handling ---
+const handleImageError = (e) => {
+  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veS4rTwvdGV4dD48L3N2Zz4=';
 };
 </script>
 
@@ -122,18 +111,14 @@ const goToDetail = (id) => {
             v-for="photo in group.photos"
             :key="photo.id"
             class="mini-card"
-            @click="goToDetail(photo.id)"
+            @click="openModal(photo)"
         >
           <div class="img-box">
-<!--            <img
-                :src="getOptimizedUrl(photo.thumb || photo.url)"
-                loading="lazy"
-                :alt="photo.title"
-            />-->
             <img
                 :src="photo.thumb || photo.url"
                 loading="lazy"
-                :alt="photo.title"
+                :alt="photo.name"
+                @error="handleImageError"
             />
           </div>
         </div>
@@ -143,6 +128,32 @@ const goToDetail = (id) => {
     <div v-if="timelineGroups.length === 0" class="empty-state">
       暂无照片数据
     </div>
+
+    <!-- Modal -->
+    <div class="modal" :class="{ active: isModalOpen }" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <button class="close-btn" @click="closeModal">
+          <svg class="close-icon" viewBox="0 0 24 24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+        <img 
+          v-if="currentPhoto" 
+          :src="currentPhoto.url" 
+          :alt="currentPhoto.name"
+          @error="handleImageError"
+        >
+        <div class="modal-info" v-if="currentPhoto">
+          <h3 class="modal-title">{{ currentPhoto.name }}</h3>
+          <p class="modal-desc">{{ currentPhoto.description || '暂无描述' }}</p>
+          <div class="modal-meta">
+             <span class="modal-date">{{ formatDate(currentPhoto.date) }}</span>
+             <span class="modal-model" v-if="currentPhoto.exif?.model">Shot on {{ currentPhoto.exif.model }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -151,6 +162,8 @@ const goToDetail = (id) => {
   padding: 20px;
   max-width: 900px;
   margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* Updated background */
 }
 
 .time-section {
@@ -235,5 +248,123 @@ const goToDetail = (id) => {
   text-align: center;
   color: #999;
   padding: 50px;
+}
+
+/* Modal Styles (Copied from Gallery.vue) */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+  opacity: 1;
+}
+
+.modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 70px rgba(0,0,0,0.3);
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal.active .modal-content {
+  transform: scale(1);
+}
+
+.modal img {
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  background: #000;
+}
+
+.modal-info {
+  padding: 30px;
+  background: white;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+}
+
+.modal-desc {
+  font-size: 1.1em;
+  color: #5d6d7e;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.modal-meta {
+  display: flex;
+  gap: 20px;
+  color: #95a5a6;
+  font-size: 0.9em;
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.close-btn:hover {
+  background: white;
+  transform: scale(1.1);
+}
+
+.close-icon {
+  width: 24px;
+  height: 24px;
+  fill: #2c3e50;
+}
+
+/* Responsive for Modal */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  
+  .modal img {
+    max-height: 60vh;
+  }
 }
 </style>
