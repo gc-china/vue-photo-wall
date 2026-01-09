@@ -33,8 +33,10 @@ jobs:
       # 4. ✨ 关键步骤：在云端运行 scan.js 生成数据 ✨
       # 这样你只需要上传图片，不用自己在本地生成 json
       - name: Run Photo Scan 📸
-        run: node scan.js
+        run: node enhance-photos.cjs
 
+      - name: Run Photo enhance-photos.js
+        run: node scan.js
       # 5. 打包 Vue 项目
       - name: Build Project 🏗️
         run: npm run build
