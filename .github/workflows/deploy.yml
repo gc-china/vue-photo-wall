@@ -34,9 +34,6 @@ jobs:
       # 这样你只需要上传图片，不用自己在本地生成 json
       - name: Run Photo Scan 📸
         run: node scan.js
-
-      - name: Run Photo enhance-photos.js
-        run: node enhance-photos.cjs
       # 5. 打包 Vue 项目
       - name: Build Project 🏗️
         run: npm run build
