@@ -1,5 +1,187 @@
 [
   {
+    "id": "8b0b15a8",
+    "url": "photos/枫径老街/47f70ddf5bca17106352d853577d8c1e.jpg",
+    "thumb": "thumbs/枫径老街/47f70ddf5bca17106352d853577d8c1e.jpg.jpg",
+    "name": "47f70ddf5bca17106352d853577d8c1e.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:14:27.510Z",
+    "size": "90.81 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "b7a718a7",
+    "url": "photos/枫径老街/c5fe9ca0a285b631c997f253115c2223.jpg",
+    "thumb": "thumbs/枫径老街/c5fe9ca0a285b631c997f253115c2223.jpg.jpg",
+    "name": "c5fe9ca0a285b631c997f253115c2223.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:14:23.722Z",
+    "size": "132.7 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "7eed0fd6",
+    "url": "photos/枫径老街/c2e9e68985b7ac3ec1f3bda16d5e85ee.jpg",
+    "thumb": "thumbs/枫径老街/c2e9e68985b7ac3ec1f3bda16d5e85ee.jpg.jpg",
+    "name": "c2e9e68985b7ac3ec1f3bda16d5e85ee.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:14:19.119Z",
+    "size": "193.12 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "4d3a9553",
+    "url": "photos/枫径老街/d3081252b3d5cf65de3d808193b8c146.jpg",
+    "thumb": "thumbs/枫径老街/d3081252b3d5cf65de3d808193b8c146.jpg.jpg",
+    "name": "d3081252b3d5cf65de3d808193b8c146.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:14:14.536Z",
+    "size": "91.16 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "184a17e3",
+    "url": "photos/枫径老街/4b56feda9ce336922ad5dfa488d30f9d.jpg",
+    "thumb": "thumbs/枫径老街/4b56feda9ce336922ad5dfa488d30f9d.jpg.jpg",
+    "name": "4b56feda9ce336922ad5dfa488d30f9d.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:14:10.242Z",
+    "size": "275.02 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "7c6a95b8",
+    "url": "photos/枫径老街/dee9cff785de159bbd6a7414aad9ee09.jpg",
+    "thumb": "thumbs/枫径老街/dee9cff785de159bbd6a7414aad9ee09.jpg.jpg",
+    "name": "dee9cff785de159bbd6a7414aad9ee09.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:14:06.044Z",
+    "size": "144.17 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "bcff00fe",
+    "url": "photos/枫径老街/c81797922dfb45462870101561626f5e.jpg",
+    "thumb": "thumbs/枫径老街/c81797922dfb45462870101561626f5e.jpg.jpg",
+    "name": "c81797922dfb45462870101561626f5e.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:14:01.752Z",
+    "size": "261.75 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "75683665",
+    "url": "photos/枫径老街/4d5221b022d763d5ada67085ece7a40a.jpg",
+    "thumb": "thumbs/枫径老街/4d5221b022d763d5ada67085ece7a40a.jpg.jpg",
+    "name": "4d5221b022d763d5ada67085ece7a40a.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:13:57.716Z",
+    "size": "201.64 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "eb01bfa3",
+    "url": "photos/枫径老街/7fbdfb6a0efeb222461c49ba03d60236.jpg",
+    "thumb": "thumbs/枫径老街/7fbdfb6a0efeb222461c49ba03d60236.jpg.jpg",
+    "name": "7fbdfb6a0efeb222461c49ba03d60236.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:13:53.902Z",
+    "size": "207.41 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "fd8e8d2b",
+    "url": "photos/枫径老街/1b12af4a9e29becb8122571ce115d917.jpg",
+    "thumb": "thumbs/枫径老街/1b12af4a9e29becb8122571ce115d917.jpg.jpg",
+    "name": "1b12af4a9e29becb8122571ce115d917.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:13:45.283Z",
+    "size": "305.49 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "d4a31c20",
+    "url": "photos/枫径老街/190f76a54c957c43dc65d310bad4490a.jpg",
+    "thumb": "thumbs/枫径老街/190f76a54c957c43dc65d310bad4490a.jpg.jpg",
+    "name": "190f76a54c957c43dc65d310bad4490a.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:13:37.663Z",
+    "size": "357.15 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "42baf317",
+    "url": "photos/枫径老街/2a3a0f9bb42a8d7808abf95a836249ad.jpg",
+    "thumb": "thumbs/枫径老街/2a3a0f9bb42a8d7808abf95a836249ad.jpg.jpg",
+    "name": "2a3a0f9bb42a8d7808abf95a836249ad.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:13:32.590Z",
+    "size": "342.49 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "00c17906",
+    "url": "photos/枫径老街/be95161f691872951da73fb7f04ce837.jpg",
+    "thumb": "thumbs/枫径老街/be95161f691872951da73fb7f04ce837.jpg.jpg",
+    "name": "be95161f691872951da73fb7f04ce837.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:13:23.435Z",
+    "size": "167.98 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
+    "id": "ae2c0204",
+    "url": "photos/枫径老街/ab6e9e2e87b8c2d0945633269c1c99f7.jpg",
+    "thumb": "thumbs/枫径老街/ab6e9e2e87b8c2d0945633269c1c99f7.jpg.jpg",
+    "name": "ab6e9e2e87b8c2d0945633269c1c99f7.jpg",
+    "category": "枫径老街",
+    "date": "2026-01-11T05:13:14.612Z",
+    "size": "221.53 KB",
+    "width": 0,
+    "height": 0,
+    "type": "image",
+    "exif": {}
+  },
+  {
     "id": "7f57b457",
     "url": "photos/长沙/d0efcffaf94c251a87d371861b233ef6.jpg",
     "thumb": "thumbs/长沙/d0efcffaf94c251a87d371861b233ef6.jpg.jpg",
@@ -10,8 +192,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "b4a07a32",
@@ -24,8 +205,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "89102396",
@@ -38,8 +218,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "05b6a2f5",
@@ -52,8 +231,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "334a91f1",
@@ -66,8 +244,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "8e1db977",
@@ -80,8 +257,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "f6b32028",
@@ -94,8 +270,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "15f70a2e",
@@ -108,8 +283,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "cd43cdb1",
@@ -122,8 +296,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "6b1c5d7f",
@@ -136,8 +309,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "6402e6c7",
@@ -150,8 +322,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "d8bbe7c9",
@@ -164,8 +335,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "94c1ff58",
@@ -178,8 +348,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "834a820a",
@@ -192,8 +361,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "be371fa7",
@@ -206,8 +374,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "2122966f",
@@ -227,8 +394,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2025-12-22 18:31"
+    }
   },
   {
     "id": "e5d66f81",
@@ -241,8 +407,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "5f70f627",
@@ -262,8 +427,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2025-12-22 18:31"
+    }
   },
   {
     "id": "69ac34f4",
@@ -276,8 +440,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "6f1cd748",
@@ -290,8 +453,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "e449dd1e",
@@ -304,8 +466,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "3aecde82",
@@ -318,8 +479,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "584c869c",
@@ -332,8 +492,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "86826763",
@@ -346,8 +505,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "432b54eb",
@@ -360,8 +518,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-22 18:31"
+    "exif": {}
   },
   {
     "id": "099e37c3",
@@ -374,8 +531,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "594b0140",
@@ -388,8 +544,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "4a713838",
@@ -402,8 +557,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "efb88b30",
@@ -416,8 +570,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "be2a8cb9",
@@ -430,8 +583,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "2677bc51",
@@ -444,8 +596,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "7bfb2b5d",
@@ -458,8 +609,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "9bd0385d",
@@ -472,8 +622,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "3a499a8b",
@@ -486,8 +635,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "fd87cd1b",
@@ -500,8 +648,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:24"
+    "exif": {}
   },
   {
     "id": "6e677d55",
@@ -514,8 +661,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:21"
+    "exif": {}
   },
   {
     "id": "9d8030f2",
@@ -528,8 +674,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:21"
+    "exif": {}
   },
   {
     "id": "8564bb32",
@@ -542,8 +687,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:21"
+    "exif": {}
   },
   {
     "id": "6fe5aace",
@@ -556,8 +700,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:21"
+    "exif": {}
   },
   {
     "id": "109c275b",
@@ -570,8 +713,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:21"
+    "exif": {}
   },
   {
     "id": "06dcc278",
@@ -584,8 +726,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:20"
+    "exif": {}
   },
   {
     "id": "0b4ed84f",
@@ -598,8 +739,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:20"
+    "exif": {}
   },
   {
     "id": "cb363cc0",
@@ -612,8 +752,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:20"
+    "exif": {}
   },
   {
     "id": "3c0bb07c",
@@ -626,8 +765,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:20"
+    "exif": {}
   },
   {
     "id": "c0982ca6",
@@ -640,8 +778,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:20"
+    "exif": {}
   },
   {
     "id": "d8052146",
@@ -654,8 +791,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:20"
+    "exif": {}
   },
   {
     "id": "015f5464",
@@ -668,8 +804,7 @@
     "width": 0,
     "height": 0,
     "type": "image",
-    "exif": {},
-    "displayTime": "2025-12-11 20:20"
+    "exif": {}
   },
   {
     "id": "58dbb9b1",
@@ -690,8 +825,7 @@
       "fstop": "f/11",
       "shutter": "1/200",
       "gps": null
-    },
-    "displayTime": "2025-12-11 20:19"
+    }
   },
   {
     "id": "4ef44168",
@@ -712,8 +846,7 @@
       "fstop": "f/2.8",
       "shutter": "1/2500",
       "gps": null
-    },
-    "displayTime": "2025-12-11 20:19"
+    }
   },
   {
     "id": "bf15062e",
@@ -734,8 +867,7 @@
       "fstop": "f/2.8",
       "shutter": "1/5000",
       "gps": null
-    },
-    "displayTime": "2025-12-11 20:19"
+    }
   },
   {
     "id": "5321b257",
@@ -756,8 +888,7 @@
       "fstop": "f/22",
       "shutter": "1/60",
       "gps": null
-    },
-    "displayTime": "2025-12-11 20:19"
+    }
   },
   {
     "id": "407fb180",
@@ -778,8 +909,7 @@
       "fstop": "f/4",
       "shutter": "1/800",
       "gps": null
-    },
-    "displayTime": "2025-12-11 20:18"
+    }
   },
   {
     "id": "959f2374",
@@ -800,8 +930,7 @@
       "fstop": "f/2.8",
       "shutter": "1/4000",
       "gps": null
-    },
-    "displayTime": "2025-11-15 14:40"
+    }
   },
   {
     "id": "9b3df41d",
@@ -822,8 +951,7 @@
       "fstop": "f/2.8",
       "shutter": "1/6400",
       "gps": null
-    },
-    "displayTime": "2025-11-15 12:32"
+    }
   },
   {
     "id": "caef8422",
@@ -844,8 +972,7 @@
       "fstop": "f/4.5",
       "shutter": "1/1300",
       "gps": null
-    },
-    "displayTime": "2025-11-15 09:42"
+    }
   },
   {
     "id": "309315e5",
@@ -866,8 +993,7 @@
       "fstop": "f/4",
       "shutter": "1/1600",
       "gps": null
-    },
-    "displayTime": "2025-11-15 08:56"
+    }
   },
   {
     "id": "5c26b8cd",
@@ -887,8 +1013,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:12"
+    }
   },
   {
     "id": "ee9d7eca",
@@ -908,8 +1033,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:12"
+    }
   },
   {
     "id": "25c05c54",
@@ -929,8 +1053,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:12"
+    }
   },
   {
     "id": "6e39afe2",
@@ -950,8 +1073,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:12"
+    }
   },
   {
     "id": "d3f891d4",
@@ -971,8 +1093,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:12"
+    }
   },
   {
     "id": "252ec1b2",
@@ -992,8 +1113,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:12"
+    }
   },
   {
     "id": "a273afad",
@@ -1013,8 +1133,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:12"
+    }
   },
   {
     "id": "c5470d15",
@@ -1034,8 +1153,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:11"
+    }
   },
   {
     "id": "c3d0dc9b",
@@ -1055,8 +1173,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:11"
+    }
   },
   {
     "id": "ebb8068a",
@@ -1076,8 +1193,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:11"
+    }
   },
   {
     "id": "b71f726a",
@@ -1097,8 +1213,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-11-27 16:11"
+    }
   },
   {
     "id": "7cb1a872",
@@ -1122,8 +1237,7 @@
         "lat": 32.06392777777778,
         "lng": 118.79484444444444
       }
-    },
-    "displayTime": "2024-10-03 18:05"
+    }
   },
   {
     "id": "d36db7c7",
@@ -1147,8 +1261,7 @@
         "lat": 32.064055555555555,
         "lng": 118.7903361111111
       }
-    },
-    "displayTime": "2024-10-03 17:13"
+    }
   },
   {
     "id": "2b1d7d07",
@@ -1172,8 +1285,7 @@
         "lat": 32.06486388888889,
         "lng": 118.79123055555556
       }
-    },
-    "displayTime": "2024-10-03 16:59"
+    }
   },
   {
     "id": "f83c4b1a",
@@ -1193,8 +1305,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-09-13 10:51"
+    }
   },
   {
     "id": "c5e41260",
@@ -1214,8 +1325,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2024-09-13 10:45"
+    }
   },
   {
     "id": "5768fbb0",
@@ -1239,8 +1349,7 @@
         "lat": 36.86398888888889,
         "lng": 99.68218888888889
       }
-    },
-    "displayTime": "2024-09-09 13:28"
+    }
   },
   {
     "id": "d33a2d9d",
@@ -1264,8 +1373,7 @@
         "lat": 36.69603333333333,
         "lng": 99.45953333333334
       }
-    },
-    "displayTime": "2024-09-09 12:20"
+    }
   },
   {
     "id": "d7017448",
@@ -1289,8 +1397,7 @@
         "lat": 35.640702777777776,
         "lng": 94.06816944444444
       }
-    },
-    "displayTime": "2024-09-07 11:54"
+    }
   },
   {
     "id": "4b1ad3e0",
@@ -1314,8 +1421,7 @@
         "lat": 35.79473888888889,
         "lng": 94.34029444444444
       }
-    },
-    "displayTime": "2024-09-07 10:19"
+    }
   },
   {
     "id": "1e47f332",
@@ -1336,8 +1442,7 @@
       "fstop": "f/18",
       "shutter": "1/60",
       "gps": null
-    },
-    "displayTime": "2024-09-07 02:15"
+    }
   },
   {
     "id": "63757e7d",
@@ -1358,8 +1463,7 @@
       "fstop": "f/11",
       "shutter": "1/80",
       "gps": null
-    },
-    "displayTime": "2024-09-07 02:09"
+    }
   },
   {
     "id": "999d4a6c",
@@ -1380,8 +1484,7 @@
       "fstop": "f/2.2",
       "shutter": "1/5000",
       "gps": null
-    },
-    "displayTime": "2024-09-07 00:42"
+    }
   },
   {
     "id": "6dbade55",
@@ -1402,8 +1505,7 @@
       "fstop": "f/6.3",
       "shutter": "1/320",
       "gps": null
-    },
-    "displayTime": "2024-09-07 00:32"
+    }
   },
   {
     "id": "c0d6a5ae",
@@ -1424,8 +1526,7 @@
       "fstop": "f/2",
       "shutter": "1/4000",
       "gps": null
-    },
-    "displayTime": "2024-09-06 03:46"
+    }
   },
   {
     "id": "33fda8d4",
@@ -1446,8 +1547,7 @@
       "fstop": "f/3.5",
       "shutter": "1/2000",
       "gps": null
-    },
-    "displayTime": "2024-09-06 03:13"
+    }
   },
   {
     "id": "3e5d0512",
@@ -1471,8 +1571,7 @@
         "lat": 39.62235277777778,
         "lng": 94.33521944444443
       }
-    },
-    "displayTime": "2024-09-05 19:47"
+    }
   },
   {
     "id": "83d665e8",
@@ -1496,8 +1595,7 @@
         "lat": 40.08646666666667,
         "lng": 94.68416666666667
       }
-    },
-    "displayTime": "2024-09-04 19:02"
+    }
   },
   {
     "id": "2fb42369",
@@ -1521,8 +1619,7 @@
         "lat": 40.08906944444445,
         "lng": 94.67974722222223
       }
-    },
-    "displayTime": "2024-09-04 18:42"
+    }
   },
   {
     "id": "a6fdf0a1",
@@ -1546,8 +1643,7 @@
         "lat": 40.03715555555555,
         "lng": 94.80606944444445
       }
-    },
-    "displayTime": "2024-09-04 13:19"
+    }
   },
   {
     "id": "97d0a6a8",
@@ -1568,8 +1664,7 @@
       "fstop": "f/3.5",
       "shutter": "1/250",
       "gps": null
-    },
-    "displayTime": "2024-09-04 08:21"
+    }
   },
   {
     "id": "410eba4e",
@@ -1590,8 +1685,7 @@
       "fstop": "f/1.8",
       "shutter": "1/80",
       "gps": null
-    },
-    "displayTime": "2024-09-04 08:11"
+    }
   },
   {
     "id": "82bddb36",
@@ -1612,8 +1706,7 @@
       "fstop": "f/1.8",
       "shutter": "1/2500",
       "gps": null
-    },
-    "displayTime": "2024-09-04 06:03"
+    }
   },
   {
     "id": "94898070",
@@ -1634,8 +1727,7 @@
       "fstop": "f/1.8",
       "shutter": "1/3200",
       "gps": null
-    },
-    "displayTime": "2024-09-02 00:52"
+    }
   },
   {
     "id": "4e14498f",
@@ -1656,8 +1748,7 @@
       "fstop": "f/1.8",
       "shutter": "1/5000",
       "gps": null
-    },
-    "displayTime": "2024-09-02 00:34"
+    }
   },
   {
     "id": "dda4152b",
@@ -1678,8 +1769,7 @@
       "fstop": "f/3.2",
       "shutter": "1/1000",
       "gps": null
-    },
-    "displayTime": "2024-09-01 23:03"
+    }
   },
   {
     "id": "02d517cf",
@@ -1700,8 +1790,7 @@
       "fstop": "f/2.8",
       "shutter": "1/1600",
       "gps": null
-    },
-    "displayTime": "2024-09-01 22:48"
+    }
   },
   {
     "id": "e7e1936f",
@@ -1722,8 +1811,7 @@
       "fstop": "f/1.8",
       "shutter": "1/2500",
       "gps": null
-    },
-    "displayTime": "2024-09-01 22:37"
+    }
   },
   {
     "id": "13978d1a",
@@ -1744,8 +1832,7 @@
       "fstop": "f/1.8",
       "shutter": "1/13",
       "gps": null
-    },
-    "displayTime": "2024-09-01 20:59"
+    }
   },
   {
     "id": "ea6ffeb8",
@@ -1766,8 +1853,7 @@
       "fstop": "f/1.8",
       "shutter": "1/200",
       "gps": null
-    },
-    "displayTime": "2024-09-01 20:31"
+    }
   },
   {
     "id": "b908b5d7",
@@ -1787,8 +1873,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2023-08-06 15:06"
+    }
   },
   {
     "id": "381b9bf2",
@@ -1808,8 +1893,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2023-08-06 15:06"
+    }
   },
   {
     "id": "ecf8f5dc",
@@ -1833,8 +1917,7 @@
         "lat": 30.53861666666667,
         "lng": 119.95316944444444
       }
-    },
-    "displayTime": "2023-08-05 14:47"
+    }
   },
   {
     "id": "83859747",
@@ -1858,8 +1941,7 @@
         "lat": 30.5195,
         "lng": 120.51248888888888
       }
-    },
-    "displayTime": "2023-08-05 12:21"
+    }
   },
   {
     "id": "023be393",
@@ -1879,8 +1961,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2023-02-19 10:41"
+    }
   },
   {
     "id": "56b17080",
@@ -1900,8 +1981,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2023-02-19 10:40"
+    }
   },
   {
     "id": "f970d742",
@@ -1921,8 +2001,7 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2023-02-19 10:40"
+    }
   },
   {
     "id": "806c69bd",
@@ -1942,7 +2021,6 @@
       "fstop": "-",
       "shutter": "-",
       "gps": null
-    },
-    "displayTime": "2023-02-19 10:39"
+    }
   }
 ]

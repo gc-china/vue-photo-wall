@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "deploy": "gh-pages -d dist",
     "scan": "node scan.js",
+    "phones": "node enhance-photos.js",
     "test": "vitest run"
   },
   "dependencies": {
