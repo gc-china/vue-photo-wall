@@ -1,0 +1,27 @@
+{
+  "name": "Vue Photo Gallery",
+  "description": "一个功能强大的 Vue.js 照片管理系统",
+  "type": "spa",
+  "branch": "main",
+  "build_path": "/dist",
+  "static": false,
+  "domains": [],
+  "headers": {
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "X-XSS-Protection": "1; mode=block"
+  },
+  "redirects": [
+    {
+      "source": "/*",
+      "target": "/index.html",
+      "type": "spa"
+    }
+  ],
+  "cors": {
+    "enabled": true,
+    "origins": ["*"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "headers": ["Content-Type", "Authorization"]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Vue Photo Gallery - 照片时光机",
+  "short_name": "照片时光机",
+  "description": "一个功能强大的 Vue.js 照片管理系统，支持 Live Photo、元数据展示、时间轴浏览",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafbfc",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
