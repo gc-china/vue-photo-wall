@@ -422,8 +422,9 @@ export default {
   padding: var(--spacing-xxl) 0 var(--spacing-xl);
 
   .page-title {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: 2.25rem;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.03em;
     color: var(--text-primary);
     margin-bottom: var(--spacing-sm);
   }
@@ -444,6 +445,10 @@ export default {
   .view-modes {
     display: flex;
     gap: var(--spacing-xs);
+
+    .btn.btn-primary {
+      box-shadow: var(--shadow-sm);
+    }
   }
 
   @media (max-width: 768px) {
@@ -462,14 +467,22 @@ export default {
     background: var(--bg-secondary);
     padding: var(--spacing-lg);
     border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
     text-align: center;
     box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
 
     .stat-number {
       display: block;
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--primary-color);
+      font-size: 1.75rem;
+      font-weight: var(--font-weight-bold);
+      letter-spacing: -0.02em;
+      color: var(--accent-color);
       margin-bottom: var(--spacing-xs);
     }
 
@@ -495,12 +508,27 @@ export default {
         justify-content: space-between;
         margin-bottom: var(--spacing-lg);
         padding-bottom: var(--spacing-sm);
-        border-bottom: 2px solid var(--primary-color);
+        border-bottom: 1px solid var(--border-color);
 
         .month-title {
-          font-size: 1.5rem;
-          font-weight: 600;
+          font-size: 1.4rem;
+          font-weight: var(--font-weight-semibold);
+          letter-spacing: -0.02em;
           color: var(--text-primary);
+          position: relative;
+          padding-left: 14px;
+
+          &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 70%;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+          }
         }
 
         .month-count {
@@ -537,7 +565,7 @@ export default {
           justify-content: center;
           min-height: 150px;
           background: var(--bg-secondary);
-          border: 2px dashed var(--border-color);
+          border: 1.5px dashed var(--border-strong);
           border-radius: var(--radius-md);
           cursor: pointer;
           transition: all var(--transition-normal);
@@ -545,7 +573,7 @@ export default {
 
           &:hover {
             border-color: var(--primary-color);
-            background: var(--bg-tertiary);
+            background: rgba(61, 122, 140, 0.04);
           }
 
           .show-more-content {

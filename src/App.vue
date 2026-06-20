@@ -119,13 +119,18 @@ export default {
 }
 
 .app-header {
-  background: var(--bg-secondary);
+  background: rgba(255, 255, 255, 0.72);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  backdrop-filter: blur(12px);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   transition: background var(--transition-normal), border-color var(--transition-normal);
+}
+
+[data-theme='dark'] .app-header {
+  background: rgba(17, 23, 26, 0.72);
 }
 
 .navbar {
@@ -142,15 +147,20 @@ export default {
   gap: var(--spacing-sm);
 
   .brand-icon {
-    width: 28px;
-    height: 28px;
-    color: var(--primary-color);
+    width: 22px;
+    height: 22px;
+    color: #ffffff;
+    background: var(--primary-gradient);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: var(--shadow-sm);
   }
 
   .brand-text {
     .brand-title {
       font-size: 1.25rem;
       font-weight: 700;
+      letter-spacing: -0.02em;
       color: var(--text-primary);
       line-height: 1.2;
     }
@@ -176,7 +186,8 @@ export default {
     border-radius: var(--radius-md);
     color: var(--text-secondary);
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
+    position: relative;
     transition: all var(--transition-fast);
 
     .icon {
@@ -187,11 +198,24 @@ export default {
     &:hover {
       background: var(--bg-tertiary);
       color: var(--text-primary);
+      transform: translateY(-1px);
     }
 
     &.active {
-      background: var(--primary-gradient);
-      color: var(--text-inverse);
+      background: rgba(61, 122, 140, 0.08);
+      color: var(--primary-color);
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        height: 2px;
+        background: var(--primary-color);
+        border-radius: var(--radius-full);
+      }
     }
   }
 
@@ -206,7 +230,7 @@ export default {
     background: var(--bg-secondary);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-spring);
 
     .icon {
       width: 18px;
@@ -215,8 +239,13 @@ export default {
 
     &:hover {
       background: var(--bg-tertiary);
-      color: var(--text-primary);
-      border-color: var(--border-strong);
+      color: var(--primary-color);
+      border-color: var(--primary-light);
+      transform: rotate(15deg);
+    }
+
+    &:active {
+      transform: rotate(15deg) scale(0.92);
     }
   }
 }
@@ -229,6 +258,7 @@ export default {
 .app-footer {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
+  border-image: linear-gradient(to right, transparent, var(--border-color), transparent) 1;
   padding: var(--spacing-lg) 0;
   text-align: center;
   color: var(--text-muted);

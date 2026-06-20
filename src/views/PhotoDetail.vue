@@ -498,6 +498,23 @@ export default {
 
 .back-button {
   margin-bottom: var(--spacing-lg);
+
+  .btn {
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.6);
+    padding: 8px 20px;
+
+    .icon {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  [data-theme='dark'] & .btn {
+    background: rgba(26, 35, 40, 0.6);
+  }
 }
 
 .detail-content {
@@ -515,9 +532,10 @@ export default {
   .image-container {
     position: relative;
     background: var(--bg-secondary);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-light);
 
     .static-image-container {
       position: relative;
@@ -696,6 +714,7 @@ export default {
   .info-card {
     background: var(--bg-secondary);
     border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
     padding: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
     box-shadow: var(--shadow-sm);
@@ -705,7 +724,7 @@ export default {
       align-items: center;
       gap: var(--spacing-sm);
       font-size: 1.2rem;
-      font-weight: 600;
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       margin-bottom: var(--spacing-md);
       padding-bottom: var(--spacing-sm);
@@ -720,9 +739,24 @@ export default {
   }
 
   .basic-info {
+    position: relative;
+    padding-left: calc(var(--spacing-lg) + 6px);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: var(--spacing-lg);
+      bottom: var(--spacing-lg);
+      width: 3px;
+      background: var(--primary-gradient);
+      border-radius: 2px;
+    }
+
     .photo-title {
       font-size: 1.6rem;
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
+      letter-spacing: -0.02em;
       color: var(--text-primary);
       margin-bottom: var(--spacing-sm);
       line-height: 1.3;
@@ -742,12 +776,17 @@ export default {
       margin-bottom: var(--spacing-lg);
 
       .tag {
-        background: var(--bg-tertiary);
+        background: rgba(61, 122, 140, 0.06);
         color: var(--primary-color);
         padding: 4px 12px;
         border-radius: var(--radius-full);
         font-size: 0.85rem;
-        font-weight: 500;
+        font-weight: var(--font-weight-medium);
+        transition: background var(--transition-fast);
+
+        &:hover {
+          background: rgba(61, 122, 140, 0.12);
+        }
       }
     }
 
@@ -778,7 +817,7 @@ export default {
 
         .meta-value {
           color: var(--text-primary);
-          font-weight: 500;
+          font-weight: var(--font-weight-medium);
           text-align: right;
           flex: 1;
           margin-left: var(--spacing-md);
@@ -810,7 +849,8 @@ export default {
         .item-value {
           font-size: 0.95rem;
           color: var(--text-primary);
-          font-weight: 500;
+          font-weight: var(--font-weight-medium);
+          font-family: var(--font-family-mono);
         }
       }
     }
@@ -831,8 +871,9 @@ export default {
 
         .coord-value {
           font-family: var(--font-family-mono);
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           color: var(--text-primary);
+          font-weight: var(--font-weight-medium);
         }
       }
 

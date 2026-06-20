@@ -330,23 +330,25 @@ export default {
 .photo-card {
   position: relative;
   background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  transition: transform var(--transition-spring), box-shadow var(--transition-spring), border-color var(--transition-spring);
   cursor: pointer;
   break-inside: avoid;
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
     box-shadow: var(--shadow-lg);
+    border-color: var(--primary-light);
 
     .photo-overlay {
       opacity: 1;
     }
 
     .photo-image {
-      transform: scale(1.04);
+      transform: scale(1.06);
     }
 
     .photo-info {
@@ -368,6 +370,7 @@ export default {
 
     .photo-image {
       opacity: 1;
+      transform: scale(1);
     }
   }
 
@@ -399,12 +402,12 @@ export default {
   position: absolute;
   top: var(--spacing-sm);
   left: var(--spacing-sm);
-  background: rgba(255, 59, 48, 0.92);
+  background: linear-gradient(135deg, #ff3b30, #ff6b6b);
   color: white;
   padding: 4px 8px;
   border-radius: var(--radius-full);
   font-size: 0.68rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   z-index: 10;
   display: none;
   align-items: center;
@@ -422,17 +425,20 @@ export default {
   position: absolute;
   top: var(--spacing-sm);
   right: var(--spacing-sm);
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: white;
   padding: 4px 10px;
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
   z-index: 10;
-  backdrop-filter: blur(10px);
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .image-container {
@@ -449,7 +455,8 @@ export default {
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    transition: opacity var(--transition-normal), transform var(--transition-slow);
+    transform: scale(0.98);
+    transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
   }
 
   .image-skeleton {
@@ -490,12 +497,13 @@ export default {
 }
 
 .photo-info {
-  padding: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
   transition: transform var(--transition-normal);
 
   .photo-title {
     font-size: 1.05rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.01em;
     color: var(--text-primary);
     margin-bottom: var(--spacing-xs);
     line-height: 1.4;
@@ -522,12 +530,17 @@ export default {
     margin-bottom: var(--spacing-sm);
 
     .photo-tag {
-      background: var(--bg-tertiary);
+      background: rgba(61, 122, 140, 0.06);
       color: var(--primary-color);
       padding: 2px 8px;
       border-radius: var(--radius-full);
       font-size: 0.78rem;
-      font-weight: 500;
+      font-weight: var(--font-weight-medium);
+      transition: background var(--transition-fast);
+
+      &:hover {
+        background: rgba(61, 122, 140, 0.12);
+      }
     }
 
     .tag-more {
@@ -553,7 +566,8 @@ export default {
         width: 14px;
         height: 14px;
         flex-shrink: 0;
-        opacity: 0.7;
+        color: var(--primary-light);
+        opacity: 0.8;
       }
     }
   }
@@ -565,12 +579,12 @@ export default {
   left: 0;
   right: 0;
   padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 100%);
+  background: linear-gradient(to top, rgba(30, 42, 50, 0.5) 0%, transparent 100%);
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   opacity: 0;
-  transition: opacity var(--transition-normal);
+  transition: opacity var(--transition-spring);
   pointer-events: none;
 
   .overlay-info {
@@ -579,7 +593,8 @@ export default {
     gap: var(--spacing-xs);
     color: white;
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 
     .overlay-icon {
       width: 16px;

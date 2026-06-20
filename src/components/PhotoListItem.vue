@@ -314,13 +314,15 @@ export default {
   padding: var(--spacing-md);
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
   box-shadow: var(--shadow-sm);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  transition: transform var(--transition-spring), box-shadow var(--transition-spring), border-color var(--transition-spring);
   cursor: pointer;
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-md);
+    border-color: var(--primary-light);
   }
 
   &.selected {
@@ -351,12 +353,12 @@ export default {
   position: absolute;
   top: var(--spacing-sm);
   left: var(--spacing-sm);
-  background: rgba(255, 59, 48, 0.92);
+  background: linear-gradient(135deg, #ff3b30, #ff6b6b);
   color: white;
   padding: 3px 8px;
   border-radius: var(--radius-full);
   font-size: 0.68rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   z-index: 10;
   display: none;
   backdrop-filter: blur(10px);
@@ -368,7 +370,7 @@ export default {
   width: 140px;
   height: 140px;
   flex-shrink: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--bg-tertiary);
 
@@ -377,7 +379,7 @@ export default {
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    transition: opacity var(--transition-normal), transform var(--transition-normal);
+    transition: opacity var(--transition-normal), transform 0.5s var(--ease-out);
   }
 
   .thumbnail-skeleton {
@@ -408,7 +410,7 @@ export default {
   }
 
   &:hover img {
-    transform: scale(1.04);
+    transform: scale(1.06);
   }
 }
 
@@ -431,7 +433,8 @@ export default {
 
   .photo-title {
     font-size: 1.15rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.01em;
     color: var(--text-primary);
     margin-bottom: var(--spacing-xs);
     line-height: 1.3;
@@ -497,7 +500,7 @@ export default {
     border-radius: var(--radius-sm);
     font-size: 0.85rem;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-spring);
     background: var(--bg-primary);
     color: var(--text-muted);
 
