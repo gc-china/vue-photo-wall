@@ -14,7 +14,7 @@
   <meta property="og:url" content="">
   
   <!-- PWA 配置 -->
-  <meta name="theme-color" content="#667eea">
+  <meta name="theme-color" content="#3d7a8c">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -24,11 +24,6 @@
   <link rel="icon" type="image/svg+xml" href="./vite.svg">
   <link rel="alternate icon" href="./favicon.ico">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png" sizes="180x180">
-  
-  <!-- 字体预加载 -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <title>Vue Photo Gallery - 照片时光机</title>
   
@@ -63,20 +58,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #f7f9fa;
       z-index: 9999;
     }
     
     .loading-content {
       text-align: center;
-      color: white;
+      color: #2a5f72;
     }
     
     .loading-spinner {
       width: 60px;
       height: 60px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
+      border: 3px solid #dfe6ea;
+      border-top-color: #3d7a8c;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin: 0 auto 20px;
@@ -91,6 +86,11 @@
     .loading-subtext {
       font-size: 0.9rem;
       opacity: 0.8;
+    }
+
+    [data-theme='dark'] .app-loading {
+      background: #11171a;
+      color: #7ab5c8;
     }
     
     @keyframes spin {
@@ -128,36 +128,6 @@
   
   <!-- 加载完成脚本 -->
   <script>
-    // 监听应用加载完成
-    window.addEventListener('DOMContentLoaded', () => {
-      const loading = document.getElementById('loading');
-      const app = document.getElementById('app');
-      
-      // 模拟加载时间
-      setTimeout(() => {
-        loading.style.opacity = '0';
-        loading.style.transition = 'opacity 0.5s ease';
-        
-        setTimeout(() => {
-          loading.style.display = 'none';
-          app.classList.add('mounted');
-        }, 500);
-      }, 1500);
-    });
-    
-    // PWA 支持（仅在生产环境下启用）
-    if ('serviceWorker' in navigator && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => {
-            console.log('SW registered: ', registration);
-          })
-          .catch(registrationError => {
-            console.log('SW registration failed: ', registrationError);
-          });
-      });
-    }
-    
     // 主题检测
     const savedTheme = localStorage.getItem('darkTheme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

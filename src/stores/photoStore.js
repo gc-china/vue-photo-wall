@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, shallowRef, computed } from 'vue'
 // 引入生成的照片数据
 import photosData from '@/assets/photos.json'
 
@@ -48,13 +48,39 @@ export const usePhotoStore = defineStore('photo', () => {
   // ============================================================
   // 状态
   // ============================================================
-  const photos = ref([])
-  const categories = ref([])
+  // 照片索引是扫描阶段生成的只读数据，使用浅响应避免深度代理全部元数据对象。
+  const photos = shallowRef([])
+  const categories = shallowRef([])
   const isLoading = ref(false)
   const currentFilter = ref('all')
   const searchQuery = ref('')
   const sortBy = ref('date')
   const sortOrder = ref('desc')
+  const searchIndex = new Map()
+
+  const indexPhoto = (photo) => {
+    const metadata = photo.metadata || {}
+    const date = new Date(photo.date)
+    const sizeMatch = String(metadata.size || '').match(/([\d.]+)\s*(B|KB|MB|GB)?/i)
+    const sizeUnits = { B: 1, KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3 }
+    const sizeBytes = sizeMatch
+      ? Number(sizeMatch[1]) * (sizeUnits[(sizeMatch[2] || 'B').toUpperCase()] || 1)
+      : 0
+
+    searchIndex.set(photo.id, {
+      text: [
+        photo.title,
+        photo.description,
+        ...(photo.tags || []),
+        photo.category,
+        metadata.camera,
+        metadata.location,
+        !isNaN(date.getTime()) ? date.toLocaleDateString('zh-CN') : ''
+      ].filter(Boolean).join(' ').toLowerCase(),
+      dateValue: isNaN(date.getTime()) ? 0 : date.getTime(),
+      sizeBytes
+    })
+  }
 
   // ============================================================
   // 计算属性
@@ -74,15 +100,7 @@ export const usePhotoStore = defineStore('photo', () => {
     // 搜索筛选
     if (searchQuery.value.trim()) {
       const query = searchQuery.value.toLowerCase().trim()
-      result = result.filter(photo => {
-        const title = (photo.title || '').toLowerCase()
-        const desc = (photo.description || '').toLowerCase()
-        const tags = (photo.tags || []).some(tag =>
-          String(tag).toLowerCase().includes(query)
-        )
-        const category = (photo.category || '').toLowerCase()
-        return title.includes(query) || desc.includes(query) || tags || category.includes(query)
-      })
+      result = result.filter(photo => searchIndex.get(photo.id)?.text.includes(query))
     }
 
     // 排序
@@ -91,17 +109,16 @@ export const usePhotoStore = defineStore('photo', () => {
       let bValue = b[sortBy.value]
 
       if (sortBy.value === 'date') {
-        aValue = new Date(a.date).getTime()
-        bValue = new Date(b.date).getTime()
+        aValue = searchIndex.get(a.id)?.dateValue || 0
+        bValue = searchIndex.get(b.id)?.dateValue || 0
       } else if (sortBy.value === 'title') {
         aValue = String(aValue || '').toLowerCase()
         bValue = String(bValue || '').toLowerCase()
         if (sortOrder.value === 'desc') return bValue.localeCompare(aValue)
         return aValue.localeCompare(bValue)
       } else if (sortBy.value === 'size') {
-        // 按文件大小排序（从 metadata.size 解析回字节近似值）
-        aValue = a.metadata ? parseFloat(a.metadata.size) || 0 : 0
-        bValue = b.metadata ? parseFloat(b.metadata.size) || 0 : 0
+        aValue = searchIndex.get(a.id)?.sizeBytes || 0
+        bValue = searchIndex.get(b.id)?.sizeBytes || 0
       }
 
       if (sortOrder.value === 'desc') {
@@ -198,24 +215,30 @@ export const usePhotoStore = defineStore('photo', () => {
   }
 
   const setPhotos = (newPhotos) => {
+    searchIndex.clear()
+    newPhotos.forEach(indexPhoto)
     photos.value = newPhotos
   }
 
   const addPhoto = (photo) => {
-    photos.value.push(photo)
+    indexPhoto(photo)
+    photos.value = [...photos.value, photo]
   }
 
   const updatePhoto = (id, updates) => {
     const index = photos.value.findIndex(p => p.id === id)
     if (index !== -1) {
-      photos.value[index] = { ...photos.value[index], ...updates }
+      const updated = { ...photos.value[index], ...updates }
+      indexPhoto(updated)
+      photos.value = photos.value.map((photo, photoIndex) => photoIndex === index ? updated : photo)
     }
   }
 
   const deletePhoto = (id) => {
     const index = photos.value.findIndex(p => p.id === id)
     if (index !== -1) {
-      photos.value.splice(index, 1)
+      searchIndex.delete(id)
+      photos.value = photos.value.filter((_, photoIndex) => photoIndex !== index)
     }
   }
 
@@ -283,7 +306,7 @@ export const usePhotoStore = defineStore('photo', () => {
   /**
    * 初始化照片数据
    */
-  const initializePhotos = async () => {
+  const initializePhotos = () => {
     setLoading(true)
     try {
       if (photosData && photosData.length > 0) {

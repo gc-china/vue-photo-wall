@@ -9,6 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "scan": "node scan.js",
+    "verify": "node scripts/verify-assets.js",
     "deploy": "npm run build && git add . && git commit -m 'Deploy to Gitee' && git push origin main"
   },
   "keywords": [

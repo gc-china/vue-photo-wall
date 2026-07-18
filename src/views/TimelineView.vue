@@ -50,6 +50,47 @@
         </div>
       </div>
 
+      <!-- 那年今日 -->
+      <div class="on-this-day" v-if="onThisDayPhotos.length > 0">
+        <div class="otd-header">
+          <div class="otd-title-area">
+            <svg class="icon otd-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="none" stroke="currentColor" stroke-width="1.8" />
+              <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M7.5 4.5L6 3M16.5 4.5L18 3M7.5 19.5L6 21M16.5 19.5L18 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <div>
+              <h2 class="otd-title">{{ onThisDayLabel }}</h2>
+              <p class="otd-subtitle">
+                {{ onThisDayPhotos.length }} 张回忆
+                <template v-if="onThisDayLabel === '那年今日' && onThisDayYears.length">
+                  · {{ onThisDayYears.join('年, ') }}年前
+                </template>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="otd-photos">
+          <div
+            v-for="photo in onThisDayPhotos.slice(0, 6)"
+            :key="photo.id"
+            class="otd-photo-item"
+            @click="openPhotoDetail(photo)"
+          >
+            <LazyThumb
+              :src="photo.thumbnailWebp || photo.thumbnail"
+              :alt="photo.title"
+              class="otd-thumb"
+            />
+            <div class="otd-photo-info">
+              <span class="otd-year">{{ new Date(photo.date).getFullYear() }}</span>
+              <span class="otd-category">{{ photo.category }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 时间轴内容 -->
       <div class="timeline-content">
         <!-- 按月视图 -->
@@ -116,7 +157,7 @@
                 <div class="month-preview">
                   <LazyThumb
                     v-if="monthData.photos[0]"
-                    :src="monthData.photos[0].thumbnail || monthData.photos[0].image"
+                    :src="monthData.photos[0].thumbnailWebp || monthData.photos[0].thumbnail || monthData.photos[0].image"
                     :alt="monthData.monthName"
                   />
                   <div v-else class="preview-placeholder">
@@ -171,7 +212,7 @@
                       @click="openPhotoDetail(photo)"
                     >
                       <LazyThumb
-                        :src="photo.thumbnail || photo.image"
+                        :src="photo.thumbnailWebp || photo.thumbnail || photo.image"
                         :alt="photo.title"
                         class="tree-photo-thumb"
                       />
@@ -204,10 +245,12 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted, h, defineComponent } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, h, defineComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePhotoStore } from '../stores/photoStore'
 import PhotoCard from '../components/PhotoCard.vue'
+import { resolvePhotoAsset } from '../utils/photoAssets'
+import { observeLazyElement } from '../utils/lazyObserver'
 
 /**
  * 内联懒加载缩略图组件（用于年视图/树状视图的小图）
@@ -222,38 +265,27 @@ const LazyThumb = defineComponent({
   setup(props) {
     const elRef = ref(null)
     const isVisible = ref(false)
-    let observer = null
+    let stopObserving = () => {}
 
-    const currentSrc = computed(() => (isVisible.value ? props.src : ''))
+    const currentSrc = computed(() => (isVisible.value ? resolvePhotoAsset(props.src) : ''))
 
     onMounted(() => {
-      if (!('IntersectionObserver' in window)) {
+      stopObserving = observeLazyElement(elRef.value, () => {
         isVisible.value = true
-        return
-      }
-      observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              isVisible.value = true
-              if (observer) observer.unobserve(entry.target)
-            }
-          })
-        },
-        { rootMargin: '100px 0px', threshold: 0.01 }
-      )
-      if (elRef.value) observer.observe(elRef.value)
+      })
     })
 
     onUnmounted(() => {
-      if (observer) observer.disconnect()
+      stopObserving()
     })
 
     return () =>
       h('img', {
         ref: elRef,
-        src: currentSrc.value,
+        src: currentSrc.value || undefined,
         alt: props.alt,
+        loading: 'lazy',
+        decoding: 'async',
         class: 'preview-image'
       })
   }
@@ -310,6 +342,58 @@ export default {
       return Object.entries(monthlyPhotos.value).sort(([a], [b]) => b.localeCompare(a))
     })
 
+    // 那年今日 / 近期回忆
+    const onThisDayPhotos = computed(() => {
+      const today = new Date()
+      const month = today.getMonth() + 1
+      const day = today.getDate()
+
+      // 1. 先找同月同日的往期照片
+      const exact = photoStore.photos.filter(photo => {
+        const d = new Date(photo.date)
+        return d.getMonth() + 1 === month && d.getDate() === day && d.getFullYear() < today.getFullYear()
+      })
+
+      if (exact.length > 0) return exact
+
+      // 2. 没有精确匹配时，取所有往期照片，按月日接近度排序，取最近的6张
+      const targetTime = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+
+      const recent = photoStore.photos.filter(photo => {
+        const d = new Date(photo.date)
+        return d.getFullYear() < today.getFullYear()
+      })
+
+      // 按月日差值排序（越近越前）
+      recent.sort((a, b) => {
+        const aDate = new Date(a.date)
+        const bDate = new Date(b.date)
+        const aThisYear = new Date(today.getFullYear(), aDate.getMonth(), aDate.getDate())
+        const bThisYear = new Date(today.getFullYear(), bDate.getMonth(), bDate.getDate())
+        return Math.abs(aThisYear - targetTime) - Math.abs(bThisYear - targetTime)
+      })
+
+      // 取最近的6张作为"近期回忆"
+      return recent.slice(0, 6)
+    })
+
+    const onThisDayLabel = computed(() => {
+      const today = new Date()
+      const month = today.getMonth() + 1
+      const day = today.getDate()
+      const hasExact = photoStore.photos.some(photo => {
+        const d = new Date(photo.date)
+        return d.getMonth() + 1 === month && d.getDate() === day && d.getFullYear() < today.getFullYear()
+      })
+      return hasExact ? '那年今日' : '近期回忆'
+    })
+
+    const onThisDayYears = computed(() => {
+      const today = new Date()
+      const years = onThisDayPhotos.value.map(p => today.getFullYear() - new Date(p.date).getFullYear())
+      return [...new Set(years)].sort((a, b) => a - b)
+    })
+
     // ── 方法 ──
     const setViewMode = (mode) => {
       viewMode.value = mode
@@ -347,7 +431,16 @@ export default {
     }
 
     const selectMonth = (year, month) => {
-      photoStore.setFilter('all')
+      // 切换到月视图
+      viewMode.value = 'month'
+      // 等待 DOM 更新后滚动到对应月份
+      nextTick(() => {
+        const monthKey = `${year}-${String(month).padStart(2, '0')}`
+        const element = document.querySelector(`[data-month="${monthKey}"]`)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      })
     }
 
     const toggleYear = (year) => {
@@ -397,6 +490,9 @@ export default {
       averagePhotosPerMonth,
       monthlyPhotos,
       sortedMonthlyPhotos,
+      onThisDayPhotos,
+      onThisDayLabel,
+      onThisDayYears,
       setViewMode,
       goToToday,
       formatMonth,
@@ -460,21 +556,18 @@ export default {
 .timeline-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-md);
+  gap: 0;
   margin-bottom: var(--spacing-xl);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
 
   .stat-item {
-    background: var(--bg-secondary);
-    padding: var(--spacing-lg);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-light);
+    padding: var(--spacing-lg) var(--spacing-md);
     text-align: center;
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+    border-right: 1px solid var(--border-color);
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
+    &:last-child {
+      border-right: 0;
     }
 
     .stat-number {
@@ -492,8 +585,118 @@ export default {
     }
   }
 
+}
+
+.on-this-day {
+  background: linear-gradient(135deg, rgba(232, 168, 124, 0.06) 0%, rgba(232, 168, 124, 0.02) 100%);
+  border: 1px solid rgba(232, 168, 124, 0.15);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xxl);
+
+  .otd-header {
+    margin-bottom: var(--spacing-lg);
+
+    .otd-title-area {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .otd-icon {
+      width: 28px;
+      height: 28px;
+      color: var(--accent-color);
+      flex-shrink: 0;
+    }
+
+    .otd-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--accent-color);
+      margin-bottom: 2px;
+    }
+
+    .otd-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+  }
+
+  .otd-photos {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    padding-bottom: var(--spacing-xs);
+
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(232, 168, 124, 0.2);
+      border-radius: 3px;
+    }
+
+    .otd-photo-item {
+      flex-shrink: 0;
+      width: 160px;
+      cursor: pointer;
+      transition: transform var(--transition-spring);
+
+      &:hover {
+        .otd-thumb {
+          transform: scale(1.05);
+          box-shadow: var(--shadow-md);
+        }
+      }
+
+      .otd-thumb {
+        display: block;
+        width: 160px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+      }
+
+      .otd-photo-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--spacing-xs);
+        padding: 0 2px;
+
+        .otd-year {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--accent-color);
+        }
+
+        .otd-category {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+        }
+      }
+    }
+  }
+
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+    .otd-photos {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      scrollbar-width: none;
+    }
   }
 }
 
@@ -501,6 +704,8 @@ export default {
   .monthly-view {
     .month-section {
       margin-bottom: var(--spacing-xxl);
+      content-visibility: auto;
+      contain-intrinsic-size: 820px;
 
       .month-header {
         display: flex;
@@ -879,6 +1084,20 @@ export default {
 
     .page-title {
       font-size: 2rem;
+    }
+  }
+
+  .timeline-stats {
+    .stat-item {
+      padding: var(--spacing-md) var(--spacing-xs);
+
+      .stat-number {
+        font-size: 1.45rem;
+      }
+
+      .stat-label {
+        font-size: 0.78rem;
+      }
     }
   }
 

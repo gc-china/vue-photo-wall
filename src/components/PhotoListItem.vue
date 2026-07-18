@@ -2,12 +2,15 @@
   <div
     ref="itemRef"
     class="photo-list-item"
+    role="button"
+    tabindex="0"
     :class="{
       'live-photo': photo.isLivePhoto,
       'selected': isSelected,
       'loaded': isLoaded
     }"
     @click="$emit('click')"
+    @keydown.enter="$emit('click')"
   >
     <!-- Live Photo 标识 -->
     <div v-if="photo.isLivePhoto" class="live-photo-badge">
@@ -17,9 +20,12 @@
     <!-- 缩略图 -->
     <div class="photo-thumbnail">
       <img
+        v-if="isVisible"
         ref="imgRef"
         :src="imgSrc"
         :alt="photo.title"
+        loading="lazy"
+        decoding="async"
         @load="onImageLoad"
         @error="onImageError"
       />
@@ -32,6 +38,7 @@
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z" />
         </svg>
+        <button type="button" @click.stop="retryImage" aria-label="重试加载缩略图">重试</button>
       </div>
     </div>
 
@@ -125,7 +132,7 @@
           controls
           @ended="stopLivePhoto"
         ></video>
-        <button class="live-close" @click.stop="stopLivePhoto">
+        <button class="live-close" @click.stop="stopLivePhoto" aria-label="关闭 Live Photo">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
           </svg>
@@ -137,6 +144,8 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { resolvePhotoAsset } from '../utils/photoAssets'
+import { observeLazyElement } from '../utils/lazyObserver'
 
 export default {
   name: 'PhotoListItem',
@@ -160,16 +169,30 @@ export default {
     const isPlayingLive = ref(false)
     const isFavorite = ref(false)
     const isVisible = ref(false)
+    const sourceIndex = ref(0)
+    const retryVersion = ref(0)
     const canShare = ref(typeof navigator !== 'undefined' && !!navigator.share)
 
-    let observer = null
+    let stopObserving = () => {}
 
     // ── 计算属性 ──
+
+    const imageCandidates = computed(() => {
+      return [
+        props.photo.thumbnailWebp,
+        props.photo.thumbnail,
+        props.photo.mediumWebp,
+        props.photo.medium,
+        props.photo.image
+      ].filter((source, index, all) => source && all.indexOf(source) === index)
+    })
 
     /** 懒加载：进入视口后才加载缩略图 */
     const imgSrc = computed(() => {
       if (!isVisible.value) return ''
-      return props.photo.thumbnail || props.photo.image
+      const source = resolvePhotoAsset(imageCandidates.value[sourceIndex.value])
+      if (!source || retryVersion.value === 0) return source
+      return `${source}${source.includes('?') ? '&' : '?'}retry=${retryVersion.value}`
     })
 
     const truncatedDescription = computed(() => {
@@ -185,8 +208,19 @@ export default {
     }
 
     const onImageError = () => {
+      if (sourceIndex.value < imageCandidates.value.length - 1) {
+        sourceIndex.value++
+        return
+      }
       isLoaded.value = false
       hasError.value = true
+    }
+
+    const retryImage = () => {
+      hasError.value = false
+      isLoaded.value = false
+      sourceIndex.value = 0
+      retryVersion.value++
     }
 
     const playLivePhoto = () => {
@@ -214,7 +248,7 @@ export default {
             url: window.location.href
           })
         } catch (error) {
-          console.error('分享失败:', error)
+          if (error?.name !== 'AbortError') console.warn('分享失败:', error)
         }
       }
     }
@@ -238,31 +272,9 @@ export default {
      * 懒加载：IntersectionObserver
      */
     const setupObserver = () => {
-      if (!('IntersectionObserver' in window)) {
+      stopObserving = observeLazyElement(itemRef.value, () => {
         isVisible.value = true
-        return
-      }
-
-      observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              isVisible.value = true
-              if (observer) {
-                observer.unobserve(entry.target)
-              }
-            }
-          })
-        },
-        {
-          rootMargin: '100px 0px',
-          threshold: 0.01
-        }
-      )
-
-      if (itemRef.value) {
-        observer.observe(itemRef.value)
-      }
+      })
     }
 
     // ── 生命周期 ──
@@ -271,10 +283,7 @@ export default {
     })
 
     onUnmounted(() => {
-      if (observer) {
-        observer.disconnect()
-        observer = null
-      }
+      stopObserving()
       if (isPlayingLive.value) {
         document.body.style.overflow = ''
       }
@@ -296,6 +305,7 @@ export default {
       // 方法
       onImageLoad,
       onImageError,
+      retryImage,
       playLivePhoto,
       stopLivePhoto,
       toggleFavorite,
@@ -318,6 +328,8 @@ export default {
   box-shadow: var(--shadow-sm);
   transition: transform var(--transition-spring), box-shadow var(--transition-spring), border-color var(--transition-spring);
   cursor: pointer;
+  content-visibility: auto;
+  contain-intrinsic-size: 180px;
 
   &:hover {
     transform: translateY(-3px);
@@ -398,14 +410,25 @@ export default {
     width: 100%;
     height: 100%;
     display: flex;
+    flex-direction: column;
+    gap: 6px;
     align-items: center;
     justify-content: center;
     color: var(--text-muted);
-    opacity: 0.4;
 
     .icon {
       width: 2rem;
       height: 2rem;
+      opacity: 0.45;
+    }
+
+    button {
+      border: 0;
+      background: transparent;
+      color: var(--primary-color);
+      font: inherit;
+      font-size: 0.75rem;
+      cursor: pointer;
     }
   }
 

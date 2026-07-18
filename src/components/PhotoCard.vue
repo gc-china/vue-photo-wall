@@ -2,6 +2,8 @@
   <div
     ref="cardRef"
     class="photo-card"
+    role="button"
+    tabindex="0"
     :class="{
       'live-photo': photo.isLivePhoto,
       'loaded': isLoaded,
@@ -9,6 +11,7 @@
       'size-small': size === 'small'
     }"
     @click="$emit('click')"
+    @keydown.enter="$emit('click')"
   >
     <!-- Live Photo 标识 -->
     <div v-if="photo.isLivePhoto" class="live-photo-badge">
@@ -25,10 +28,16 @@
     <!-- 图片容器 -->
     <div class="image-container" :style="containerStyle">
       <img
+        v-if="isVisible"
         ref="imgRef"
         :src="imgSrc"
+        :srcset="imgSrcset"
+        :sizes="imgSizes"
         :alt="photo.title"
         class="photo-image"
+        loading="lazy"
+        decoding="async"
+        :fetchpriority="index < 6 ? 'high' : 'auto'"
         @load="onImageLoad"
         @error="onImageError"
       />
@@ -42,6 +51,7 @@
           <path d="M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z" />
         </svg>
         <span>加载失败</span>
+        <button type="button" class="image-retry" @click.stop="retryImage">重试</button>
       </div>
     </div>
 
@@ -119,7 +129,7 @@
         playsinline
         @ended="stopLivePhoto"
       ></video>
-      <button class="live-close" @click.stop="stopLivePhoto">
+      <button class="live-close" @click.stop="stopLivePhoto" aria-label="关闭 Live Photo">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
         </svg>
@@ -130,6 +140,11 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import {
+  getResponsiveSourceSet,
+  resolvePhotoAsset
+} from '../utils/photoAssets'
+import { observeLazyElement } from '../utils/lazyObserver'
 
 export default {
   name: 'PhotoCard',
@@ -157,25 +172,47 @@ export default {
     const hasError = ref(false)
     const isPlayingLive = ref(false)
     const isVisible = ref(false)
-    const naturalRatio = ref(0) // 图片宽高比
+    const sourceIndex = ref(0)
+    const retryVersion = ref(0)
 
-    let observer = null
+    let stopObserving = () => {}
 
     // ── 计算属性 ──
 
-    /** 图片 src：进入视口后才加载真实缩略图 */
-    const imgSrc = computed(() => {
-      if (!isVisible.value) return ''
-      return props.photo.thumbnail || props.photo.image
+    const imageCandidates = computed(() => {
+      return [
+        props.photo.thumbnailWebp,
+        props.photo.thumbnail,
+        props.photo.mediumWebp,
+        props.photo.medium,
+        props.photo.image
+      ].filter((source, index, all) => source && all.indexOf(source) === index)
     })
 
-    /** 容器样式：根据图片实际比例自适应高度（瀑布流） */
+    /** 图片 src：进入视口后加载，并在格式缺失时逐级降级。 */
+    const imgSrc = computed(() => {
+      if (!isVisible.value) return ''
+      const source = resolvePhotoAsset(imageCandidates.value[sourceIndex.value])
+      if (!source || retryVersion.value === 0) return source
+      return `${source}${source.includes('?') ? '&' : '?'}retry=${retryVersion.value}`
+    })
+
+    /** srcset：小屏用缩略图(400px)，大屏用中等图(800px) */
+    const imgSrcset = computed(() => {
+      if (!isVisible.value || sourceIndex.value > 0 || retryVersion.value > 0) return ''
+      return getResponsiveSourceSet(props.photo)
+    })
+
+    /** sizes：卡片宽度约 300-400px，根据视口选择 */
+    const imgSizes = computed(() => {
+      return '(max-width: 480px) 100vw, (max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'
+    })
+
+    /** 扫描阶段已记录原图尺寸，首帧即可预留正确比例，避免解码后布局跳动。 */
     const containerStyle = computed(() => {
-      if (naturalRatio.value > 0 && isLoaded.value) {
-        return { paddingBottom: `${(1 / naturalRatio.value) * 100}%` }
-      }
-      // 未加载时给一个默认比例占位
-      return { paddingBottom: '75%' }
+      const width = Number(props.photo.metadata?.width)
+      const height = Number(props.photo.metadata?.height)
+      return { aspectRatio: width > 0 && height > 0 ? `${width} / ${height}` : '4 / 3' }
     })
 
     const truncatedDescription = computed(() => {
@@ -197,20 +234,23 @@ export default {
     const onImageLoad = () => {
       isLoaded.value = true
       hasError.value = false
-      // 记录图片真实宽高比，用于瀑布流自适应
-      if (imgRef.value) {
-        const w = imgRef.value.naturalWidth
-        const h = imgRef.value.naturalHeight
-        if (w > 0 && h > 0) {
-          naturalRatio.value = w / h
-        }
-      }
       emit('load')
     }
 
     const onImageError = () => {
+      if (sourceIndex.value < imageCandidates.value.length - 1) {
+        sourceIndex.value++
+        return
+      }
       isLoaded.value = false
       hasError.value = true
+    }
+
+    const retryImage = () => {
+      hasError.value = false
+      isLoaded.value = false
+      sourceIndex.value = 0
+      retryVersion.value++
     }
 
     const playLivePhoto = () => {
@@ -247,33 +287,9 @@ export default {
      * 真正的懒加载：IntersectionObserver 监听卡片进入视口
      */
     const setupObserver = () => {
-      if (!('IntersectionObserver' in window)) {
-        // 降级：直接显示
+      stopObserving = observeLazyElement(cardRef.value, () => {
         isVisible.value = true
-        return
-      }
-
-      observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              isVisible.value = true
-              // 加载后停止观察
-              if (observer) {
-                observer.unobserve(entry.target)
-              }
-            }
-          })
-        },
-        {
-          rootMargin: '100px 0px',
-          threshold: 0.01
-        }
-      )
-
-      if (cardRef.value) {
-        observer.observe(cardRef.value)
-      }
+      })
     }
 
     // 键盘事件
@@ -286,14 +302,15 @@ export default {
     // ── 生命周期 ──
     onMounted(() => {
       setupObserver()
-      document.addEventListener('keydown', handleKeyDown)
+    })
+
+    // 仅在 Live Photo 模态框打开时注册全局按键，普通卡片不再各占一个监听器。
+    watch(isPlayingLive, (playing) => {
+      document[playing ? 'addEventListener' : 'removeEventListener']('keydown', handleKeyDown)
     })
 
     onUnmounted(() => {
-      if (observer) {
-        observer.disconnect()
-        observer = null
-      }
+      stopObserving()
       document.removeEventListener('keydown', handleKeyDown)
       if (isPlayingLive.value) {
         document.body.style.overflow = ''
@@ -311,6 +328,8 @@ export default {
       isVisible,
       // 计算属性
       imgSrc,
+      imgSrcset,
+      imgSizes,
       containerStyle,
       truncatedDescription,
       displayedTags,
@@ -318,6 +337,7 @@ export default {
       // 方法
       onImageLoad,
       onImageError,
+      retryImage,
       playLivePhoto,
       stopLivePhoto,
       formatDate
@@ -337,6 +357,8 @@ export default {
   transition: transform var(--transition-spring), box-shadow var(--transition-spring), border-color var(--transition-spring);
   cursor: pointer;
   break-inside: avoid;
+  content-visibility: auto;
+  contain-intrinsic-size: 360px 430px;
 
   &:hover {
     transform: translateY(-6px);
@@ -372,6 +394,10 @@ export default {
       opacity: 1;
       transform: scale(1);
     }
+  }
+
+  &.loaded:hover .photo-image {
+    transform: scale(1.035);
   }
 
   &.error {
@@ -492,6 +518,22 @@ export default {
 
     span {
       font-size: 0.85rem;
+    }
+
+    .image-retry {
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-full);
+      padding: 5px 12px;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font: inherit;
+      font-size: 0.78rem;
+      cursor: pointer;
+
+      &:hover {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
     }
   }
 }

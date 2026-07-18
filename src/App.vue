@@ -15,13 +15,13 @@
           </div>
 
           <div class="nav-actions">
-            <router-link to="/" class="nav-link" active-class="active">
+            <router-link to="/" class="nav-link" active-class="active" aria-label="相册">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" />
               </svg>
               <span>相册</span>
             </router-link>
-            <router-link to="/timeline" class="nav-link" active-class="active">
+            <router-link to="/timeline" class="nav-link" active-class="active" aria-label="时光轴">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2" />
                 <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2" />
@@ -30,7 +30,7 @@
               </svg>
               <span>时光轴</span>
             </router-link>
-            <button class="theme-toggle" @click="toggleTheme" :title="isDarkTheme ? '切换亮色主题' : '切换暗色主题'">
+            <button class="theme-toggle" @click="toggleTheme" :title="isDarkTheme ? '切换亮色主题' : '切换暗色主题'" :aria-label="isDarkTheme ? '切换亮色主题' : '切换暗色主题'">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" v-if="isDarkTheme">
                 <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM12 2v3M12 19v3M2 12h3M19 12h3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" />
               </svg>
@@ -98,8 +98,6 @@ export default {
       }
       document.documentElement.setAttribute('data-theme', isDarkTheme.value ? 'dark' : 'light')
 
-      // 初始化照片数据
-      photoStore.initializePhotos()
     })
 
     return {
@@ -312,20 +310,42 @@ export default {
 // 响应式设计
 @media (max-width: 768px) {
   .navbar {
-    height: auto;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md) 0;
+    height: 58px;
+    gap: var(--spacing-sm);
+  }
+
+  .nav-brand {
+    min-width: 0;
+
+    .brand-icon {
+      width: 19px;
+      height: 19px;
+      padding: 7px;
+    }
+
+    .brand-title {
+      font-size: 1.05rem;
+      white-space: nowrap;
+    }
+
+    .brand-subtitle {
+      display: none;
+    }
   }
 
   .nav-actions {
     .nav-link {
-      padding: 8px 12px;
+      padding: 8px 10px;
       font-size: 0.85rem;
 
       span:last-child {
         display: none;
       }
+    }
+
+    .theme-toggle {
+      width: 36px;
+      height: 36px;
     }
   }
 

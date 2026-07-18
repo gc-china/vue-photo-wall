@@ -13,9 +13,10 @@
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="搜索照片标题、描述或标签..."
+              placeholder="搜索标题、分类、相机、日期..."
               class="search-input"
               @input="onSearch"
+              aria-label="搜索照片"
             />
             <button class="search-clear" @click="clearSearch" v-if="searchQuery">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -112,7 +113,11 @@
       <main class="gallery-main">
         <!-- 照片统计 -->
         <div class="gallery-stats" v-if="!isLoading && filteredPhotos.length > 0">
-          <p>共 <strong>{{ filteredPhotos.length }}</strong> 张照片</p>
+          <div class="gallery-heading">
+            <span class="gallery-eyebrow">PHOTO LIBRARY</span>
+            <h2>{{ currentAlbumName }}</h2>
+            <p>当前显示 <strong>{{ filteredPhotos.length }}</strong> 张影像</p>
+          </div>
           <div class="date-range" v-if="dateRange">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2" />
@@ -148,7 +153,7 @@
           </transition>
 
           <!-- 无限滚动哨兵元素 -->
-          <div ref="sentinelRef" class="scroll-sentinel" v-if="hasMorePhotos">
+          <div ref="sentinelRef" class="scroll-sentinel" v-if="hasMorePhotos" aria-live="polite">
             <div class="sentinel-loading">
               <div class="spinner"></div>
               <span>加载中...</span>
@@ -164,6 +169,7 @@
             </svg>
             <h3>没有找到照片</h3>
             <p>尝试调整筛选条件或搜索关键词</p>
+            <button class="btn btn-ghost btn-sm" @click="resetFilters">清除筛选</button>
           </div>
         </div>
 
@@ -204,6 +210,7 @@ export default {
     const sentinelRef = ref(null)
 
     let scrollObserver = null
+    let searchTimer = null
 
     // ── 计算属性 ──
     const photos = computed(() => photoStore.photos)
@@ -213,16 +220,17 @@ export default {
       get: () => photoStore.currentFilter,
       set: (val) => photoStore.setFilter(val)
     })
-    const searchQuery = computed({
-      get: () => photoStore.searchQuery,
-      set: (val) => {} // 写入由 onSearch 处理
-    })
+    const searchQuery = ref(photoStore.searchQuery)
     const sortBy = computed({
       get: () => photoStore.sortBy,
       set: (val) => {}
     })
     const sortOrder = computed(() => photoStore.sortOrder)
     const isLoading = computed(() => photoStore.isLoading)
+    const currentAlbumName = computed(() => {
+      if (currentFilter.value === 'all') return searchQuery.value ? '搜索结果' : '全部影像'
+      return categories.value.find(category => category.id === currentFilter.value)?.name || '当前相册'
+    })
 
     const displayedPhotos = computed(() => {
       const end = currentPage.value * pageSize.value
@@ -235,10 +243,17 @@ export default {
 
     const dateRange = computed(() => {
       if (filteredPhotos.value.length === 0) return null
-      const dates = filteredPhotos.value.map(p => new Date(p.date).getTime()).filter(t => !isNaN(t))
-      if (dates.length === 0) return null
-      const minDate = new Date(Math.min(...dates))
-      const maxDate = new Date(Math.max(...dates))
+      let min = Infinity
+      let max = -Infinity
+      filteredPhotos.value.forEach((photo) => {
+        const value = new Date(photo.date).getTime()
+        if (isNaN(value)) return
+        min = Math.min(min, value)
+        max = Math.max(max, value)
+      })
+      if (!isFinite(min) || !isFinite(max)) return null
+      const minDate = new Date(min)
+      const maxDate = new Date(max)
       const fmt = (d) => d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
       return `${fmt(minDate)} — ${fmt(maxDate)}`
     })
@@ -255,15 +270,27 @@ export default {
     }
 
     const onSearch = (event) => {
-      photoStore.setSearchQuery(event.target.value)
-      currentPage.value = 1
-      loadedImages.value = 0
+      searchQuery.value = event.target.value
+      window.clearTimeout(searchTimer)
+      searchTimer = window.setTimeout(() => {
+        photoStore.setSearchQuery(searchQuery.value)
+        currentPage.value = 1
+        loadedImages.value = 0
+      }, 160)
     }
 
     const clearSearch = () => {
       photoStore.setSearchQuery('')
+      window.clearTimeout(searchTimer)
       currentPage.value = 1
       loadedImages.value = 0
+    }
+
+    const resetFilters = () => {
+      searchQuery.value = ''
+      photoStore.setSearchQuery('')
+      photoStore.setFilter('all')
+      currentPage.value = 1
     }
 
     const onSortChange = (event) => {
@@ -344,6 +371,7 @@ export default {
     })
 
     onUnmounted(() => {
+      window.clearTimeout(searchTimer)
       if (scrollObserver) {
         scrollObserver.disconnect()
         scrollObserver = null
@@ -370,12 +398,14 @@ export default {
       displayedPhotos,
       hasMorePhotos,
       dateRange,
+      currentAlbumName,
 
       // 方法
       selectCategory,
       setViewMode,
       onSearch,
       clearSearch,
+      resetFilters,
       onSortChange,
       toggleSortOrder,
       loadMore,
@@ -689,33 +719,39 @@ export default {
 
 .gallery-stats {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: var(--spacing-lg);
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-xs);
+  margin-bottom: var(--spacing-xl);
+  padding: 2px 0 var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
   position: relative;
-  overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--primary-gradient);
-    border-radius: 2px;
-  }
+  .gallery-heading {
+    .gallery-eyebrow {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--primary-color);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+    }
 
-  p {
-    color: var(--text-secondary);
+    h2 {
+      margin-bottom: 2px;
+      color: var(--text-primary);
+      font-size: clamp(1.6rem, 3vw, 2.35rem);
+      line-height: 1.12;
+      letter-spacing: -0.04em;
+    }
 
-    strong {
-      color: var(--accent-color);
-      font-weight: var(--font-weight-bold);
+    p {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+
+      strong {
+        color: var(--accent-color);
+        font-weight: var(--font-weight-bold);
+      }
     }
   }
 
@@ -852,6 +888,7 @@ export default {
 
     p {
       color: var(--text-muted);
+      margin-bottom: var(--spacing-md);
     }
   }
 }
@@ -910,21 +947,41 @@ export default {
     border-radius: var(--radius-lg);
     padding: var(--spacing-md);
     box-shadow: var(--shadow-sm);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'search search'
+      'view sort'
+      'albums albums';
+    gap: var(--spacing-md);
   }
 
   .sidebar-section {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 0;
 
     &:last-child {
       margin-bottom: 0;
     }
+
+    &:nth-child(1) { grid-area: search; }
+    &:nth-child(2) { grid-area: view; }
+    &:nth-child(3) { grid-area: albums; }
+    &:nth-child(4) { grid-area: sort; }
   }
 
   // 移动端分类导航回到横向药丸按钮流式布局
   .category-list {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: var(--spacing-sm);
+    overflow-x: auto;
+    padding: 2px 2px var(--spacing-xs);
+    scrollbar-width: none;
+    overscroll-behavior-inline: contain;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
 
     .category-item {
       padding: 8px 16px;
@@ -932,6 +989,7 @@ export default {
       background: var(--bg-primary);
       border-radius: var(--radius-full);
       transform: none;
+      flex: 0 0 auto;
 
       &:hover:not(.active) {
         background: var(--bg-tertiary);
@@ -966,9 +1024,12 @@ export default {
   }
 
   .gallery-stats {
-    flex-direction: column;
+    align-items: flex-start;
     gap: var(--spacing-sm);
-    text-align: center;
+
+    .date-range {
+      display: none;
+    }
   }
 }
 </style>

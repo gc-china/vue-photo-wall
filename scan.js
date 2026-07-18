@@ -12,6 +12,7 @@ const __dirname = path.dirname(__filename);
 // ============================================================
 const PHOTOS_DIR = path.join(__dirname, 'public/photos');
 const THUMBS_DIR = path.join(__dirname, 'public/thumbs');
+const MEDIUM_DIR = path.join(__dirname, 'public/medium');
 const OUTPUT_FILE = path.join(__dirname, 'src/assets/photos.json');
 
 // 支持的图片扩展名
@@ -20,6 +21,13 @@ const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.heic', '.webp'];
 const THUMB_WIDTH = 400;
 // 缩略图质量
 const THUMB_QUALITY = 80;
+// 中等分辨率图目标宽度
+const MEDIUM_WIDTH = 800;
+// 中等分辨率图质量
+const MEDIUM_QUALITY = 82;
+// 原图解码开销高，默认 2 路并发兼顾速度与内存峰值，可通过环境变量覆盖。
+const PROCESS_CONCURRENCY = Math.max(1, Math.min(4, Number(process.env.SCAN_CONCURRENCY) || 2));
+const FORCE_REBUILD = process.argv.includes('--force');
 
 // ============================================================
 // 工具函数
@@ -70,15 +78,38 @@ function scanDirectory(dir) {
  * 美化文件名作为标题
  * @param {string} filename - 原始文件名（含扩展名）
  * @param {string} category - 分类名
+ * @param {Date|string} [date] - 拍摄日期
  * @returns {string}
  */
-function beautifyTitle(filename, category) {
+function beautifyTitle(filename, category, date) {
   const baseName = path.basename(filename, path.extname(filename));
-  // 纯数字时间戳命名 -> 用分类名 + 简短序号
+
+  // 纯数字时间戳 → 用分类名
   if (/^\d{10,}$/.test(baseName)) {
     return category;
   }
-  // 替换下划线/连字符为空格，首字母大写
+
+  // 数字+分隔符组合的时间戳类文件名（如 1725209555000_1726195314790_53）→ 用 "分类名 · 日期"
+  if (/^\d+([_-]\d+)+$/.test(baseName)) {
+    const d = date instanceof Date ? date : new Date(date);
+    if (d && !isNaN(d.getTime())) {
+      const dateStr = d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+      return `${category} · ${dateStr}`;
+    }
+    return category;
+  }
+
+  // hash 文件名（16位以上字母数字混合，类似 md5）→ 用 "分类名 · 日期" 格式
+  if (/^[a-fA-F0-9]{16,}$/.test(baseName)) {
+    const d = date instanceof Date ? date : new Date(date);
+    if (d && !isNaN(d.getTime())) {
+      const dateStr = d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+      return `${category} · ${dateStr}`;
+    }
+    return category;
+  }
+
+  // 正常有意义的文件名 → 美化
   return baseName
     .replace(/[_-]+/g, ' ')
     .replace(/\s+/g, ' ')
@@ -165,6 +196,20 @@ async function processPhoto(photoInfo) {
   const thumbFullPath = path.join(THUMBS_DIR, thumbRelativePath);
   ensureDir(path.dirname(thumbFullPath));
 
+  // WebP 缩略图输出路径
+  const thumbWebpRelativePath = relativePath.replace(/\.[^/.]+$/, '.webp');
+  const thumbWebpFullPath = path.join(THUMBS_DIR, thumbWebpRelativePath);
+  ensureDir(path.dirname(thumbWebpFullPath));
+
+  // 中等分辨率图输出路径
+  const mediumRelativePath = relativePath.replace(/\.[^/.]+$/, '.jpg');
+  const mediumFullPath = path.join(MEDIUM_DIR, mediumRelativePath);
+  ensureDir(path.dirname(mediumFullPath));
+
+  // 中等分辨率 WebP 输出路径
+  const mediumWebpFullPath = path.join(MEDIUM_DIR, thumbWebpRelativePath);
+  ensureDir(path.dirname(mediumWebpFullPath));
+
   // 获取文件大小
   const stat = fs.statSync(filePath);
 
@@ -189,21 +234,33 @@ async function processPhoto(photoInfo) {
     const sharpImage = sharp(filePath, {
       // HEIC 支持需要 sharp 内置的 libvips 编译支持
       failOnError: false
-    });
+    }).rotate();
 
     // 获取原图元数据（宽高）
     const imageMeta = await sharpImage.metadata();
-    metadata.width = imageMeta.width || 0;
-    metadata.height = imageMeta.height || 0;
+    const swapsDimensions = imageMeta.orientation >= 5 && imageMeta.orientation <= 8;
+    metadata.width = swapsDimensions ? (imageMeta.height || 0) : (imageMeta.width || 0);
+    metadata.height = swapsDimensions ? (imageMeta.width || 0) : (imageMeta.height || 0);
 
-    // 生成缩略图（宽度 400px，保持比例）
-    await sharpImage
-      .resize(THUMB_WIDTH, null, {
-        fit: 'inside',
-        withoutEnlargement: true
-      })
-      .jpeg({ quality: THUMB_QUALITY, mozjpeg: true })
-      .toFile(thumbFullPath);
+    // 基于同一自动旋转管道派生四种预览，避免串行重复完整解码。
+    await Promise.all([
+      sharpImage.clone()
+        .resize(THUMB_WIDTH, null, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: THUMB_QUALITY, mozjpeg: true })
+        .toFile(thumbFullPath),
+      sharpImage.clone()
+        .resize(THUMB_WIDTH, null, { fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: THUMB_QUALITY })
+        .toFile(thumbWebpFullPath),
+      sharpImage.clone()
+        .resize(MEDIUM_WIDTH, null, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: MEDIUM_QUALITY, mozjpeg: true })
+        .toFile(mediumFullPath),
+      sharpImage.clone()
+        .resize(MEDIUM_WIDTH, null, { fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: MEDIUM_QUALITY })
+        .toFile(mediumWebpFullPath)
+    ]);
 
     // 2. 提取 EXIF 信息（图片格式才尝试）
     if (ext !== '.png' && ext !== '.webp') {
@@ -267,7 +324,10 @@ async function processPhoto(photoInfo) {
     id: generateId(relativePath),
     image: `/photos/${relativePath}`,
     thumbnail: `/thumbs/${thumbRelativePath}`,
-    title: beautifyTitle(fileName, category),
+    thumbnailWebp: `/thumbs/${thumbWebpRelativePath}`,
+    medium: `/medium/${mediumRelativePath}`,
+    mediumWebp: `/medium/${thumbWebpRelativePath}`,
+    title: beautifyTitle(fileName, category, date),
     description: '',
     date: date instanceof Date && !isNaN(date.getTime())
       ? date.toISOString()
@@ -296,6 +356,7 @@ async function scanPhotos() {
 
   // 确保输出目录存在
   ensureDir(THUMBS_DIR);
+  ensureDir(MEDIUM_DIR);
   ensureDir(path.dirname(OUTPUT_FILE));
 
   // 递归扫描所有子目录
@@ -312,38 +373,87 @@ async function scanPhotos() {
   const photos = [];
   let successCount = 0;
   let failCount = 0;
+  let reusedCount = 0;
+  let processedCount = 0;
+  let completedCount = 0;
 
-  // 逐张处理（串行，避免内存峰值）
-  for (let i = 0; i < photoFiles.length; i++) {
-    const photoInfo = photoFiles[i];
-    const progress = `[${i + 1}/${photoFiles.length}]`;
-    process.stdout.write(`${progress} 处理: ${photoInfo.relativePath} ... `);
+  let previousById = new Map();
+  if (!FORCE_REBUILD && fs.existsSync(OUTPUT_FILE)) {
+    try {
+      const previous = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf-8'));
+      previousById = new Map(previous.map(photo => [photo.id, photo]));
+    } catch {
+      console.warn('⚠ 旧索引无法读取，将重新处理全部照片');
+    }
+  }
 
-    const result = await processPhoto(photoInfo);
+  const canReuse = (photoInfo, previous) => {
+    if (!previous) return false;
+    const sourceMtime = fs.statSync(photoInfo.filePath).mtimeMs;
+    const outputs = [previous.thumbnail, previous.thumbnailWebp, previous.medium, previous.mediumWebp]
+      .map(file => file && path.join(__dirname, 'public', file.replace(/^\/+/, '')));
+    return outputs.length === 4 && outputs.every(file =>
+      file && fs.existsSync(file) && fs.statSync(file).mtimeMs >= sourceMtime
+    );
+  };
+
+  const processAtIndex = async (index) => {
+    const photoInfo = photoFiles[index];
+    const id = generateId(photoInfo.relativePath);
+    const previous = previousById.get(id);
+    let result = null;
+
+    if (canReuse(photoInfo, previous)) {
+      result = previous;
+      reusedCount++;
+    } else {
+      result = await processPhoto(photoInfo);
+      processedCount++;
+    }
+
+    completedCount++;
     if (result) {
       photos.push(result);
       successCount++;
-      console.log('✓');
+      console.log(`[${completedCount}/${photoFiles.length}] ✓ ${photoInfo.relativePath}${result === previous ? '（复用）' : ''}`);
     } else {
       failCount++;
-      console.log('✗');
+      console.log(`[${completedCount}/${photoFiles.length}] ✗ ${photoInfo.relativePath}`);
     }
-  }
+  };
+
+  // 有界工作队列：比全串行更快，也避免一次解码全部大图造成内存峰值。
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(PROCESS_CONCURRENCY, photoFiles.length) },
+    async () => {
+      while (nextIndex < photoFiles.length) {
+        const index = nextIndex++;
+        await processAtIndex(index);
+      }
+    }
+  );
+  await Promise.all(workers);
 
   // 按日期降序排序
   photos.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // 写入 JSON
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(photos, null, 2), 'utf-8');
+  const tempOutput = `${OUTPUT_FILE}.tmp`;
+  fs.writeFileSync(tempOutput, JSON.stringify(photos, null, 2), 'utf-8');
+  fs.renameSync(tempOutput, OUTPUT_FILE);
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`  扫描完成`);
   console.log(`  ✓ 成功: ${successCount} 张`);
+  console.log(`  ↻ 复用: ${reusedCount} 张`);
+  console.log(`  ⚙ 重建: ${processedCount} 张`);
   if (failCount > 0) {
     console.log(`  ✗ 失败: ${failCount} 张`);
   }
   console.log(`  📁 数据已保存: ${OUTPUT_FILE}`);
   console.log(`  🖼 缩略图目录: ${THUMBS_DIR}`);
+  console.log(`  🖼 中等图目录: ${MEDIUM_DIR}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }
 
