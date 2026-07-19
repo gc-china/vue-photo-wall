@@ -771,20 +771,9 @@ export default {
 
 .photos-container {
   .photo-masonry {
-    column-count: 4;
+    column-width: 220px;
+    column-count: auto;
     column-gap: var(--spacing-lg);
-
-    @media (max-width: 1200px) {
-      column-count: 3;
-    }
-
-    @media (max-width: 768px) {
-      column-count: 2;
-    }
-
-    @media (max-width: 480px) {
-      column-count: 1;
-    }
 
     .masonry-item {
       break-inside: avoid;
@@ -925,19 +914,16 @@ export default {
 }
 
 // ── 响应式：平板端（768px ~ 1023px）──
-@media (max-width: 1023px) and (min-width: 768px) {
-  .sidebar {
-    width: 220px;
-    padding: var(--spacing-md);
-    padding-right: var(--spacing-lg);
-  }
-}
-
 // ── 响应式：移动端（< 768px）── 恢复上下堆叠布局
-@media (max-width: 767px) {
+@media (max-width: 1100px) {
   .photo-gallery > .container {
     flex-direction: column;
+    align-items: stretch;
     gap: var(--spacing-lg);
+  }
+
+  .gallery-main {
+    width: 100%;
   }
 
   .sidebar {
@@ -1023,6 +1009,9 @@ export default {
     }
   }
 
+}
+
+@media (max-width: 767px) {
   .gallery-stats {
     align-items: flex-start;
     gap: var(--spacing-sm);
